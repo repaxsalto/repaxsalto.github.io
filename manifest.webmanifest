@@ -3,7 +3,7 @@
   "short_name": "Repasse",
   "description": "Divisão da taxa de atendimento entre os colaboradores do Salto das Nuvens.",
   "lang": "pt-BR",
-  "start_url": "./?app=1",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#241e19",
