@@ -194,6 +194,35 @@ input[type=date] { font-variant-numeric: tabular-nums; }
 .cand.sel { border-color: var(--ferrugem-borda); box-shadow: 3px 3px 0 var(--dourado); }
 
 .add-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 150px) auto; gap: 10px; }
+.add-col.com-tipo { grid-template-columns: minmax(0, 1fr) minmax(0, 140px) minmax(0, 120px) auto; }
+.add-col.nome-cheio { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.add-col.nome-cheio input { grid-column: 1 / -1; }
+.grupos-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.grupo-chips { display: grid; gap: 8px; align-content: start; border: 2px dashed var(--tracejado); padding: 10px 12px 12px; min-width: 0; }
+.grupo-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.grupo-topo .eyebrow b { color: var(--tinta); }
+.link-btn { all: unset; cursor: pointer; font-size: 12.5px; font-weight: 800; color: var(--ferrugem-txt); text-decoration: underline; text-underline-offset: 3px; padding: 6px 2px; }
+.link-btn:focus-visible { outline: 3px solid var(--dourado); }
+.link-btn[hidden] { display: none; }
+.lista-dia .tag { margin-left: 6px; vertical-align: middle; }
+.grade-equipe { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: start; }
+.painel h2 .conta { font-family: var(--f-texto); font-size: 14px; font-weight: 800; color: var(--secundario); letter-spacing: .04em; margin-left: 6px; }
+.t-equipe .mover { white-space: nowrap; }
+.t-equipe, .t-equipe tbody { display: block; }
+.t-equipe thead { display: none; }
+.t-equipe tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--linha); }
+.t-equipe td { padding: 0; border: 0; }
+.t-equipe td:first-child { grid-column: 1 / -1; }
+.t-equipe input, .t-equipe select { min-height: 44px; width: 100%; }
+.periodo { display: grid; gap: 14px; margin-bottom: 24px; }
+.rp-linha { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.rp-nav { min-width: 44px; padding: 0; font-size: 20px; }
+.rp-txt { font-family: var(--f-titulo); font-weight: 800; font-size: 26px; text-transform: uppercase; align-self: center; min-width: 0; }
+.rp-linha input[type=month] { min-height: 44px; }
+.dias-grade { display: grid; gap: 12px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+.dias-mes { display: grid; gap: 6px; }
+.dias-mes .chips { gap: 6px; }
+.chip.dia { font-variant-numeric: tabular-nums; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; min-height: 36px; box-sizing: border-box;
   border: 2px solid var(--tracejado); background: var(--creme); font-weight: 700; font-size: 14px; }
@@ -390,10 +419,6 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   .t-salvos tr.detalhe { display: block; }
   .t-salvos tr.detalhe > td { display: block; padding: 4px 12px 14px; }
   /* Equipe em linhas compactas */
-  .t-equipe, .t-equipe tbody { display: block; }
-  .t-equipe tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 120px) auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--linha); }
-  .t-equipe td { padding: 0; border: 0; }
-  .t-equipe input, .t-equipe select { min-height: 44px; width: 100%; }
   .so-desk { display: none; }
   td small.so-cel { display: block; }
   .kpis { gap: 12px; margin-bottom: 22px; }
@@ -414,6 +439,11 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   table.cats tfoot td:empty { display: none; }
   .add-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .add-col input { grid-column: 1 / -1; }
+  .add-col.com-tipo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .add-col.com-tipo .btn { grid-column: 1 / -1; }
+  .grupos-chips, .grade-equipe { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .rp-txt { font-size: 22px; flex: 1; text-align: center; }
+  #rp-semana .btn:not(.rp-nav), #rp-mes .btn:not(.rp-nav) { flex: 1 0 100%; }
   .add-col.add-um { grid-template-columns: minmax(0, 1fr); }
   .add-col.add-um input { grid-column: auto; }
   .barra-salvar.rel { position: static; display: grid; grid-template-columns: 1fr 1fr; box-shadow: none; }
@@ -460,7 +490,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
       <button data-aba="lancamento" class="ativa"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M7 1h2v6h6v2H9v6H7V9H1V7h6z"/></svg><span class="longo">Lançamento do dia</span><span class="curto">Lançar</span></button>
       <div class="grupo">ACOMPANHAR</div>
       <button data-aba="salvos"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l8 8-8 8-8-8z"/></svg><span class="longo">Lançamentos salvos</span><span class="curto">Salvos</span></button>
-      <button data-aba="relatorio"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v12H1zm2 2v2h10V4zm0 4v2h10V8zm0 4h6v-1H3z"/></svg><span class="longo">Relatório semanal</span><span class="curto">Semana</span></button>
+      <button data-aba="relatorio"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v12H1zm2 2v2h10V4zm0 4v2h10V8zm0 4h6v-1H3z"/></svg><span class="longo">Relatório</span><span class="curto">Relatório</span></button>
       <div class="grupo">CONFIGURAR</div>
       <button data-aba="equipe"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg><span class="longo">Equipe</span><span class="curto">Equipe</span></button>
       <button data-aba="config"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 1.5l6.5 6.5L8 14.5 1.5 8z"/></svg><span class="longo">Configurações</span><span class="curto">Ajustes</span></button>
@@ -528,17 +558,28 @@ footer.rodape img { width: 150px; height: auto; display: block; }
 
           <div class="painel listrado pilha">
             <h2>Quem trabalhou</h2>
-            <form id="form-col" class="add-col">
+            <form id="form-col" class="add-col com-tipo nome-cheio">
               <label class="sr" for="col-nome">Nome do colaborador</label>
               <input id="col-nome" list="nomes" placeholder="Nome (ou vários separados por vírgula)" autocomplete="off">
               <datalist id="nomes"></datalist>
               <label class="sr" for="col-cat">Categoria</label>
               <select id="col-cat"></select>
+              <label class="sr" for="col-tipo">Fixo ou diarista</label>
+              <select id="col-tipo"><option value="fixo">Fixo</option><option value="diarista">Diarista</option></select>
               <button class="btn principal" type="submit">Adicionar</button>
             </form>
             <div class="pilha" style="gap:8px">
               <div class="eyebrow">Equipe cadastrada · toque para marcar</div>
-              <div id="chips" class="chips"></div>
+              <div class="grupos-chips">
+                <div class="grupo-chips">
+                  <div class="grupo-topo"><span class="eyebrow">Fixos <b id="n-fixo"></b></span><button class="link-btn" type="button" data-todos="fixo">Marcar todos</button></div>
+                  <div id="chips-fixo" class="chips"></div>
+                </div>
+                <div class="grupo-chips">
+                  <div class="grupo-topo"><span class="eyebrow">Diaristas <b id="n-diarista"></b></span><button class="link-btn" type="button" data-todos="diarista">Marcar todos</button></div>
+                  <div id="chips-diarista" class="chips"></div>
+                </div>
+              </div>
             </div>
             <ul id="lista-dia" class="lista-dia"></ul>
             <div id="vazio-dia" class="vazio">Ninguém adicionado ainda. Digite os nomes acima ou toque na equipe.</div>
@@ -601,16 +642,38 @@ footer.rodape img { width: 150px; height: auto; display: block; }
       <header class="cabeca">
         <div>
           <div class="eyebrow">Acompanhar</div>
-          <h1>Relatório semanal</h1>
-          <p>Quanto cada colaborador recebe no período, de segunda a domingo.</p>
+          <h1>Relatório</h1>
+          <p>Quanto cada colaborador recebe no período que você escolher: uma semana, um mês, um intervalo de datas ou só alguns dias.</p>
         </div>
-        <div class="filtros">
-          <button class="btn" id="rel-passada">Semana passada</button>
-          <button class="btn" id="rel-atual">Esta semana</button>
+      </header>
+      <div class="periodo">
+        <div class="seg" id="rp-modos" role="tablist" aria-label="Tipo de período">
+          <button data-rmodo="semana" class="ativo">Semana</button>
+          <button data-rmodo="mes">Mês</button>
+          <button data-rmodo="periodo">De / até</button>
+          <button data-rmodo="dias">Dias escolhidos</button>
+        </div>
+        <div id="rp-semana" class="rp-linha">
+          <button class="btn rp-nav" data-rp-nav="-1" aria-label="Semana anterior">‹</button>
+          <span class="rp-txt" id="rp-semana-txt"></span>
+          <button class="btn rp-nav" data-rp-nav="1" aria-label="Próxima semana">›</button>
+          <button class="btn" id="rp-esta-semana">Esta semana</button>
+        </div>
+        <div id="rp-mes" class="rp-linha" hidden>
+          <button class="btn rp-nav" data-rp-mes="-1" aria-label="Mês anterior">‹</button>
+          <label class="campo" for="rp-mes-in"><span>Mês</span><input type="month" id="rp-mes-in"></label>
+          <button class="btn rp-nav" data-rp-mes="1" aria-label="Próximo mês">›</button>
+          <button class="btn" id="rp-este-mes">Este mês</button>
+        </div>
+        <div id="rp-periodo" class="rp-linha" hidden>
           <label class="campo" for="rel-de"><span>De</span><input type="date" id="rel-de"></label>
           <label class="campo" for="rel-ate"><span>Até</span><input type="date" id="rel-ate"></label>
         </div>
-      </header>
+        <div id="rp-dias" class="pilha" hidden>
+          <div class="grupo-topo"><span class="ajuda">Toque nos dias que entram no relatório. Aparecem os dias que têm lançamento.</span><button class="link-btn" type="button" id="rp-dias-limpar">Limpar seleção</button></div>
+          <div id="rp-dias-lista" class="dias-grade"></div>
+        </div>
+      </div>
       <div id="rel-conteudo"></div>
       <div class="barra-salvar rel">
         <button class="btn" id="rel-copiar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="9" height="9"/><path d="M11 5V2H2v9h3"/></svg>Copiar para WhatsApp</button>
@@ -629,21 +692,35 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           <p>Quem está aqui aparece para marcar com um toque no lançamento do dia. Nomes novos lançados no dia entram aqui sozinhos.</p>
         </div>
       </header>
-      <div class="painel listrado pilha" style="max-width:820px">
-        <form id="form-eq" class="add-col">
+      <div class="painel listrado pilha" style="margin-bottom:28px">
+        <h2>Cadastrar</h2>
+        <form id="form-eq" class="add-col com-tipo">
           <label class="sr" for="eq-nome">Nome</label>
           <input id="eq-nome" placeholder="Nome do colaborador" autocomplete="off">
           <label class="sr" for="eq-cat">Categoria</label>
           <select id="eq-cat"></select>
+          <label class="sr" for="eq-tipo">Fixo ou diarista</label>
+          <select id="eq-tipo"><option value="fixo">Fixo</option><option value="diarista">Diarista</option></select>
           <button class="btn principal" type="submit">Cadastrar</button>
         </form>
-        <div class="rolagem">
-          <table class="t-equipe">
-            <thead class="cab-desk"><tr><th>Nome</th><th>Categoria</th><th></th></tr></thead>
-            <tbody id="eq-corpo"></tbody>
-          </table>
+      </div>
+      <div class="grade-equipe">
+        <div class="painel listrado pilha">
+          <h2>Equipe fixa <span class="conta" id="eq-n-fixo"></span></h2>
+          <div class="rolagem"><table class="t-equipe">
+            <thead class="cab-desk"><tr><th>Nome</th><th>Categoria</th><th></th><th></th></tr></thead>
+            <tbody id="eq-fixo"></tbody>
+          </table></div>
+          <div id="eq-vazio-fixo" class="vazio" hidden>Nenhum fixo cadastrado.</div>
         </div>
-        <div id="eq-vazio" class="vazio" hidden>Ninguém cadastrado ainda. Cadastre acima ou salve um lançamento com os nomes do dia.</div>
+        <div class="painel listrado pilha">
+          <h2>Diaristas <span class="conta" id="eq-n-diarista"></span></h2>
+          <div class="rolagem"><table class="t-equipe">
+            <thead class="cab-desk"><tr><th>Nome</th><th>Categoria</th><th></th><th></th></tr></thead>
+            <tbody id="eq-diarista"></tbody>
+          </table></div>
+          <div id="eq-vazio-diarista" class="vazio" hidden>Nenhum diarista cadastrado.</div>
+        </div>
       </div>
       <div style="height:28px"></div>
     </section>
@@ -704,13 +781,13 @@ footer.rodape img { width: 150px; height: auto; display: block; }
 
         <div class="painel listrado largo pilha" id="c-pdf">
           <h2>PDF do relatório</h2>
-          <p class="ajuda">Escolha o que aparece no PDF da semana. Vale para o botão Baixar PDF do relatório semanal.</p>
+          <p class="ajuda">Escolha o que aparece no PDF. Vale para o botão Baixar PDF do Relatório.</p>
           <div class="pdf-grade">
             <fieldset class="grupo-pdf"><legend>Cabeçalho</legend>
               <label class="campo" for="p-titulo"><span>Título</span><input id="p-titulo" data-pdf="titulo" maxlength="60"></label>
               <label class="campo" for="p-linha"><span>Linha acima do título</span><input id="p-linha" data-pdf="linhaTopo" maxlength="80"></label>
               <label class="chk" for="p-logo"><input type="checkbox" id="p-logo" data-pdf="logo">Sol do Salto</label>
-              <label class="chk" for="p-periodo"><input type="checkbox" id="p-periodo" data-pdf="periodo">Período (datas da semana)</label>
+              <label class="chk" for="p-periodo"><input type="checkbox" id="p-periodo" data-pdf="periodo">Período (datas)</label>
             </fieldset>
             <fieldset class="grupo-pdf"><legend>Quadros de resumo</legend>
               <label class="chk" for="p-cg"><input type="checkbox" id="p-cg" data-pdf="cardGerado">Total gerado</label>
@@ -917,7 +994,7 @@ aplicarTema(lerTema());
 const EMAIL_PAINEL = 'diretoria@repaxsalto.github.io';
 const FBV = '10.12.2';
 const PDF_PADRAO = {
-  titulo: 'Repasse da semana', linhaTopo: 'Salto das Nuvens · Taxa de atendimento', logo: true, periodo: true,
+  titulo: 'Repasse da equipe', linhaTopo: 'Salto das Nuvens · Taxa de atendimento', logo: true, periodo: true,
   cardGerado: true, cardRetencoes: true, retSeparadas: true, cardPagar: true,
   tabColab: true, colCategoria: true, colDias: true, colAssinatura: true,
   tabDias: true, diaGerado: true, diaRetido: true, diaDistribuido: true, diaPessoas: true,
@@ -936,6 +1013,7 @@ function normCfg(raw) {
   const c = JSON.parse(JSON.stringify({ ...CFG_PADRAO, ...raw }));
   if (!Array.isArray(raw.retencoes)) c.retencoes = [{ id: 'encargos', nome: 'Encargos trabalhistas', pct: Number(raw.retencaoPct ?? 20) || 0 }, { ...RET_BONIFICACAO }];
   c.pdf = { ...PDF_PADRAO, ...(raw.pdf || {}) };
+  if (c.pdf.titulo === 'Repasse da semana') c.pdf.titulo = PDF_PADRAO.titulo; // título antigo padrão
   if (!Array.isArray(c.categorias) || !c.categorias.length) c.categorias = JSON.parse(JSON.stringify(CFG_PADRAO.categorias));
   c.categorias.forEach((k) => { k.peso = pesoDe(k); });
   return c;
@@ -1008,7 +1086,8 @@ const ref = (col, id) => fb.fs.doc(fb.db, col, id);
 const limpo = (o) => JSON.parse(JSON.stringify(o)); // Firestore não aceita undefined
 const salvarLanc = (l) => gravar(() => fb.fs.setDoc(ref('lancamentos', l.id), limpo(l)));
 const excluirLanc = (id) => gravar(() => fb.fs.deleteDoc(ref('lancamentos', id)));
-const salvarMembro = (m) => gravar(() => fb.fs.setDoc(ref('equipe', m.id), { nome: m.nome, categoriaId: m.categoriaId }));
+const tipoDe = (m) => (m && m.tipo === 'diarista' ? 'diarista' : 'fixo');
+const salvarMembro = (m) => gravar(() => fb.fs.setDoc(ref('equipe', m.id), { nome: m.nome, categoriaId: m.categoriaId, tipo: tipoDe(m) }));
 const excluirMembro = (id) => gravar(() => fb.fs.deleteDoc(ref('equipe', id)));
 const salvarCfg = (c) => gravar(() => fb.fs.setDoc(ref('config', 'geral'), limpo(c)));
 
@@ -1091,17 +1170,17 @@ $$('.seg [data-origem]').forEach((b) => b.addEventListener('click', () => setOri
 $('#l-valor').addEventListener('input', atualizarResumo);
 $('#l-valor').addEventListener('blur', () => { const v = Calc.parseValor($('#l-valor').value); $('#l-valor').value = v ? num2(v) : ''; });
 
-function addNoDia(nome, cat) {
+function addNoDia(nome, cat, tipo) {
   nome = nome.trim().replace(/\s+/g, ' ');
   if (!nome) return;
   if (F.dia.some((c) => norm(c.nome) === norm(nome))) { toast(nome + ' já está na lista do dia.', true); return; }
-  F.dia.push({ nome, categoriaId: cat });
+  F.dia.push({ nome, categoriaId: cat, tipo: tipo === 'diarista' ? 'diarista' : 'fixo' });
 }
-$('#col-nome').addEventListener('input', () => { const m = D.equipe.find((c) => norm(c.nome) === norm($('#col-nome').value)); if (m) $('#col-cat').value = m.categoriaId; });
+$('#col-nome').addEventListener('input', () => { const m = D.equipe.find((c) => norm(c.nome) === norm($('#col-nome').value)); if (m) { $('#col-cat').value = m.categoriaId; $('#col-tipo').value = tipoDe(m); } });
 $('#form-col').addEventListener('submit', (e) => {
   e.preventDefault();
   const nomes = $('#col-nome').value.split(/[,;\n]/).filter((n) => n.trim());
-  nomes.forEach((n) => { const m = D.equipe.find((c) => norm(c.nome) === norm(n)); addNoDia(m ? m.nome : n, nomes.length === 1 || !m ? $('#col-cat').value : m.categoriaId); });
+  nomes.forEach((n) => { const m = D.equipe.find((c) => norm(c.nome) === norm(n)); addNoDia(m ? m.nome : n, nomes.length === 1 || !m ? $('#col-cat').value : m.categoriaId, m ? tipoDe(m) : $('#col-tipo').value); });
   $('#col-nome').value = ''; $('#col-nome').focus(); renderDia();
 });
 
@@ -1115,19 +1194,32 @@ function renderLanc() {
 function renderDia() {
   const cats = regras().categorias;
   const eq = D.equipe.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  $('#chips').innerHTML = eq.length ? eq.map((c) => `<button class="chip${F.dia.some((d) => norm(d.nome) === norm(c.nome)) ? ' on' : ''}" data-id="${esc(c.id)}" aria-pressed="${F.dia.some((d) => norm(d.nome) === norm(c.nome))}">${esc(c.nome)}<small>${esc(nomeCat(c.categoriaId, cats))}</small></button>`).join('')
-    : '<span class="muted" style="font-size:14px">A equipe cadastrada aparece aqui. Os nomes de hoje entram na equipe quando você salvar.</span>';
-  $$('#chips .chip').forEach((b) => b.addEventListener('click', () => {
+  const marcado = (c) => F.dia.some((d) => norm(d.nome) === norm(c.nome));
+  ['fixo', 'diarista'].forEach((t) => {
+    const l = eq.filter((c) => tipoDe(c) === t), sel = l.filter(marcado).length;
+    $('#n-' + t).textContent = l.length ? `${sel}/${l.length}` : '';
+    $('#chips-' + t).innerHTML = l.length ? l.map((c) => `<button class="chip${marcado(c) ? ' on' : ''}" data-id="${esc(c.id)}" aria-pressed="${marcado(c)}">${esc(c.nome)}<small>${esc(nomeCat(c.categoriaId, cats))}</small></button>`).join('')
+      : `<span class="muted" style="font-size:13.5px">${t === 'fixo' ? 'Nenhum fixo cadastrado.' : 'Nenhum diarista cadastrado.'}</span>`;
+    const b = $(`[data-todos="${t}"]`); b.hidden = !l.length; b.textContent = l.length && sel === l.length ? 'Desmarcar todos' : 'Marcar todos';
+  });
+  $$('.grupos-chips .chip').forEach((b) => b.addEventListener('click', () => {
     const c = D.equipe.find((x) => x.id === b.dataset.id), i = F.dia.findIndex((d) => norm(d.nome) === norm(c.nome));
-    if (i >= 0) F.dia.splice(i, 1); else F.dia.push({ nome: c.nome, categoriaId: c.categoriaId });
+    if (i >= 0) F.dia.splice(i, 1); else F.dia.push({ nome: c.nome, categoriaId: c.categoriaId, tipo: tipoDe(c) });
     renderDia();
   }));
-  $('#lista-dia').innerHTML = F.dia.map((c, i) => `<li><b>${esc(c.nome)}</b><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`).join('');
+  $('#lista-dia').innerHTML = F.dia.map((c, i) => `<li><b>${esc(c.nome)}${tipoDe(D.equipe.find((m) => norm(m.nome) === norm(c.nome)) || c) === 'diarista' ? '<span class="tag">Diarista</span>' : ''}</b><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`).join('');
   $$('#lista-dia select').forEach((s) => s.addEventListener('change', () => { F.dia[s.dataset.i].categoriaId = s.value; atualizarResumo(); }));
   $$('#lista-dia [data-rm]').forEach((b) => b.addEventListener('click', () => { F.dia.splice(b.dataset.rm, 1); renderDia(); }));
   $('#vazio-dia').hidden = F.dia.length > 0;
   atualizarResumo();
 }
+$$('[data-todos]').forEach((b) => b.addEventListener('click', () => {
+  const t = b.dataset.todos, mesmo = (c) => (d) => norm(d.nome) === norm(c.nome);
+  const l = D.equipe.filter((c) => tipoDe(c) === t).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR'));
+  if (l.every((c) => F.dia.some(mesmo(c)))) F.dia = F.dia.filter((d) => !l.some((c) => norm(c.nome) === norm(d.nome)));
+  else l.forEach((c) => { if (!F.dia.some(mesmo(c))) F.dia.push({ nome: c.nome, categoriaId: c.categoriaId, tipo: t }); });
+  renderDia();
+}));
 function calcForm() { const r = regras(); return Calc.calcular({ valorBruto: Calc.parseValor($('#l-valor').value), retencoes: r.retencoes, colaboradores: F.dia, modo: r.modo, categorias: r.categorias }); }
 function atualizarResumo() {
   const r = calcForm(), n = F.dia.length;
@@ -1171,7 +1263,7 @@ $('#salvar').addEventListener('click', async () => {
   };
   const ok = await salvarLanc(l);
   if (ok) {
-    for (const c of F.dia) if (!D.equipe.some((m) => norm(m.nome) === norm(c.nome))) await salvarMembro({ id: novoId(), nome: c.nome, categoriaId: c.categoriaId });
+    for (const c of F.dia) if (!D.equipe.some((m) => norm(m.nome) === norm(c.nome))) await salvarMembro({ id: novoId(), nome: c.nome, categoriaId: c.categoriaId, tipo: c.tipo });
     toast(editando ? 'Lançamento atualizado.' : `Lançamento de ${dataBR(data)} salvo.`);
     novoForm(); if (editando) irPara('salvos'); else renderLanc();
   }
@@ -1288,10 +1380,69 @@ $('#s-todos').addEventListener('click', () => { $('#s-de').value = $('#s-ate').v
    RELATÓRIO SEMANAL
    ============================================================ */
 const retsComValor = (r) => { const v = r.retencoes.filter((x) => x.valor > 0); return v.length ? v : [{ nome: 'Retido', valor: 0 }]; };
-function dadosRel() { const de = $('#rel-de').value, ate = $('#rel-ate').value; const l = D.lanc.filter((x) => x.data >= de && x.data <= ate); return { de, ate, qtd: l.length, ...Calc.relatorio(l) }; }
+const RP = { modo: 'semana', semIni: '', mes: '', dias: new Set() };
+const somaDias = (s, n) => { const d = deISO(s); return iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)); };
+const mesAtual = () => hoje().slice(0, 7);
+const somaMes = (m, n) => { const [a, mm] = m.split('-').map(Number); const d = new Date(a, mm - 1 + n, 1); return iso(d).slice(0, 7); };
+const nomeMes = (m) => { const [a, mm] = m.split('-').map(Number); const t = new Date(a, mm - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); };
+function periodoAtual() {
+  if (RP.modo === 'mes') {
+    const [a, mm] = RP.mes.split('-').map(Number), de = `${RP.mes}-01`, ate = iso(new Date(a, mm, 0));
+    return { de, ate, filtro: (d) => d >= de && d <= ate, rotulo: nomeMes(RP.mes), arquivo: RP.mes };
+  }
+  if (RP.modo === 'periodo') {
+    let de = $('#rel-de').value, ate = $('#rel-ate').value;
+    if (!de || !ate) return { de: '', ate: '', filtro: () => false, rotulo: 'escolha as duas datas', arquivo: 'periodo' };
+    if (de > ate) [de, ate] = [ate, de];
+    return { de, ate, filtro: (d) => d >= de && d <= ate, rotulo: de === ate ? dataBR(de) : `${dataBR(de)} a ${dataBR(ate)}`, arquivo: de === ate ? de : `${de}-a-${ate}` };
+  }
+  if (RP.modo === 'dias') {
+    const l = [...RP.dias].sort();
+    if (!l.length) return { de: '', ate: '', filtro: () => false, rotulo: 'nenhum dia escolhido', arquivo: 'dias' };
+    const de = l[0], ate = l[l.length - 1], curto = (d) => dataBR(d).slice(0, 5);
+    const rotulo = l.length === 1 ? dataBR(de) : l.length <= 4
+      ? `${l.slice(0, -1).map(curto).join(', ')} e ${dataBR(ate)}`
+      : `${l.length} dias entre ${dataBR(de)} e ${dataBR(ate)}`;
+    return { de, ate, filtro: (d) => RP.dias.has(d), rotulo, arquivo: l.length === 1 ? de : `${l.length}-dias-${de}-a-${ate}` };
+  }
+  const de = RP.semIni, ate = somaDias(de, 6);
+  return { de, ate, filtro: (d) => d >= de && d <= ate, rotulo: `${dataBR(de)} a ${dataBR(ate)}`, arquivo: `${de}-a-${ate}` };
+}
+function dadosRel() {
+  const p = periodoAtual(), l = D.lanc.filter((x) => p.filtro(x.data));
+  return { ...p, qtd: l.length, ...Calc.relatorio(l) };
+}
+function renderPeriodo() {
+  $$('#rp-modos [data-rmodo]').forEach((b) => b.classList.toggle('ativo', b.dataset.rmodo === RP.modo));
+  ['semana', 'mes', 'periodo', 'dias'].forEach((m) => ($('#rp-' + m).hidden = RP.modo !== m));
+  const ate = somaDias(RP.semIni, 6);
+  $('#rp-semana-txt').textContent = `${dataBR(RP.semIni).slice(0, 5)} a ${dataBR(ate)}`;
+  $('#rp-mes-in').value = RP.mes;
+  if (RP.modo === 'dias') {
+    const datas = [...new Set(D.lanc.map((l) => l.data))].sort().reverse(), porMes = new Map();
+    datas.forEach((d) => { const m = d.slice(0, 7); if (!porMes.has(m)) porMes.set(m, []); porMes.get(m).push(d); });
+    const soma = (d) => D.lanc.filter((l) => l.data === d).reduce((a, l) => a + (Number(l.valorBruto) || 0), 0);
+    $('#rp-dias-lista').innerHTML = datas.length ? [...porMes].map(([m, ds]) => `<div class="dias-mes"><span class="eyebrow">${nomeMes(m)}</span><div class="chips">${ds.map((d) =>
+      `<button class="chip dia${RP.dias.has(d) ? ' on' : ''}" data-dia="${d}" aria-pressed="${RP.dias.has(d)}">${diaSem(d).slice(0, 3)} ${dataBR(d).slice(0, 5)}<small>${brl(soma(d))}</small></button>`).join('')}</div></div>`).join('')
+      : `<div class="vazio">${D.pronto ? 'Ainda não há dias lançados.' : 'Carregando lançamentos…'}</div>`;
+    $$('#rp-dias-lista [data-dia]').forEach((b) => b.addEventListener('click', () => { const d = b.dataset.dia; if (RP.dias.has(d)) RP.dias.delete(d); else RP.dias.add(d); renderRel(); }));
+  }
+}
+$$('#rp-modos [data-rmodo]').forEach((b) => b.addEventListener('click', () => {
+  RP.modo = b.dataset.rmodo;
+  if (RP.modo === 'periodo' && !$('#rel-de').value) { $('#rel-de').value = RP.semIni; $('#rel-ate').value = somaDias(RP.semIni, 6); }
+  renderRel();
+}));
+$$('[data-rp-nav]').forEach((b) => b.addEventListener('click', () => { RP.semIni = somaDias(RP.semIni, 7 * Number(b.dataset.rpNav)); renderRel(); }));
+$('#rp-esta-semana').addEventListener('click', () => { RP.semIni = semana(0)[0]; renderRel(); });
+$$('[data-rp-mes]').forEach((b) => b.addEventListener('click', () => { RP.mes = somaMes(RP.mes, Number(b.dataset.rpMes)); renderRel(); }));
+$('#rp-este-mes').addEventListener('click', () => { RP.mes = mesAtual(); renderRel(); });
+$('#rp-mes-in').addEventListener('change', () => { if ($('#rp-mes-in').value) { RP.mes = $('#rp-mes-in').value; renderRel(); } });
+$('#rp-dias-limpar').addEventListener('click', () => { RP.dias.clear(); renderRel(); });
 function renderRel() {
+  renderPeriodo();
   const r = dadosRel();
-  if (!r.qtd) { $('#rel-conteudo').innerHTML = `<div class="painel listrado"><div class="vazio">${D.pronto ? `Nenhum lançamento entre ${dataBR(r.de)} e ${dataBR(r.ate)}.` : 'Carregando lançamentos…'}</div></div>`; return; }
+  if (!r.qtd) { $('#rel-conteudo').innerHTML = `<div class="painel listrado"><div class="vazio">${D.pronto ? `${RP.modo === 'dias' && !RP.dias.size ? 'Toque nos dias acima para montar o relatório.' : RP.modo === 'periodo' && !r.de ? 'Escolha as duas datas.' : `Nenhum lançamento em ${r.rotulo}.`}` : 'Carregando lançamentos…'}</div></div>`; return; }
   $('#rel-conteudo').innerHTML = `
     <div class="kpis">
       <div class="kpi"><span>Total gerado</span><b>${brl(r.totalBruto)}</b></div>
@@ -1299,7 +1450,7 @@ function renderRel() {
       <div class="kpi destaque"><span>Total a pagar</span><b>${brl(r.totalLiquido)}</b></div>
     </div>
     <div class="rel-grade">
-      <div class="painel listrado"><h2>A pagar por colaborador</h2><p class="muted" style="margin:-8px 0 12px">${dataBR(r.de)} a ${dataBR(r.ate)} · ${r.dias.length} ${r.dias.length === 1 ? 'dia lançado' : 'dias lançados'}</p>
+      <div class="painel listrado"><h2>A pagar por colaborador</h2><p class="muted" style="margin:-8px 0 12px">${esc(r.rotulo)} · ${r.dias.length} ${r.dias.length === 1 ? 'dia lançado' : 'dias lançados'}</p>
         <div class="rolagem"><table><thead><tr><th>Colaborador</th><th class="so-desk">Categoria</th><th class="num">Dias</th><th class="num">Recebe</th></tr></thead><tbody>
         ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b><small class="so-cel">${esc(c.categoria)}</small></td><td class="so-desk">${esc(c.categoria)}</td><td class="num">${c.dias}</td><td class="num"><span class="valor">${brl(c.valor)}</span></td></tr>`).join('')}
         <tr class="total"><td>Total</td><td class="so-desk"></td><td></td><td class="num"><span class="valor">${brl(r.totalLiquido)}</span></td></tr></tbody></table></div></div>
@@ -1310,12 +1461,10 @@ function renderRel() {
     </div>`;
 }
 ['#rel-de', '#rel-ate'].forEach((s) => $(s).addEventListener('change', renderRel));
-$('#rel-atual').addEventListener('click', () => { [$('#rel-de').value, $('#rel-ate').value] = semana(0); renderRel(); });
-$('#rel-passada').addEventListener('click', () => { [$('#rel-de').value, $('#rel-ate').value] = semana(-1); renderRel(); });
 function semanaPadrao() { const dow = new Date().getDay(); return semana(dow === 1 ? -1 : 0); } // segunda abre a semana que acabou
 
 function textoRel(r) {
-  return `*Taxa de atendimento · ${dataBR(r.de)} a ${dataBR(r.ate)}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.valor)}`).join('\n') +
+  return `*Taxa de atendimento · ${r.rotulo}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.valor)}`).join('\n') +
     `\n\nTotal gerado: ${brl(r.totalBruto)}\n` + r.retencoes.filter((x) => x.valor > 0).map((x) => `${x.nome}: ${brl(x.valor)}\n`).join('') +
     `*Total a pagar: ${brl(r.totalLiquido)}*`;
 }
@@ -1340,10 +1489,10 @@ $('#rel-excel').addEventListener('click', async () => {
   const wb = XLSX.utils.book_new();
   const add = (nome, linhas) => { const ws = XLSX.utils.aoa_to_sheet(linhas); ws['!cols'] = linhas[0].map((_, i) => ({ wch: Math.max(...linhas.map((l) => String(l[i] ?? '').length)) + 2 })); XLSX.utils.book_append_sheet(wb, ws, nome); };
   add('A pagar', [['Colaborador', 'Categoria', 'Dias', 'Valor a receber (R$)'], ...r.colaboradores.map((c) => [c.nome, c.categoria, c.dias, c.valor]), ['Total', '', '', r.totalLiquido]]);
-  add('Resumo', [['Período', `${dataBR(r.de)} a ${dataBR(r.ate)}`], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${x.nome} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
+  add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${x.nome} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
   add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
-  await salvarArquivo(`repasse-taxa-${r.de}-a-${r.ate}.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+  await salvarArquivo(`repasse-taxa-${r.arquivo}.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
 });
 async function gerarPDF(r, P) {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
@@ -1357,7 +1506,7 @@ async function gerarPDF(r, P) {
   if (P.logo) { try { doc.addImage(SOL, 'PNG', 40, 24, 46, 46); } catch {} }
   if (P.linhaTopo.trim()) { doc.setTextColor(...DOUR); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(P.linhaTopo.trim().toUpperCase(), tx, P.titulo.trim() ? 40 : 54); }
   if (P.titulo.trim()) { doc.setTextColor(...CREME); doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.text(P.titulo.trim().toUpperCase(), tx, 64, { maxWidth: W - tx - (P.periodo ? 150 : 40) }); }
-  if (P.periodo) { doc.setTextColor(...CREME); doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.text(`${dataBR(r.de)} a ${dataBR(r.ate)}`, W - 40, 64, { align: 'right' }); }
+  if (P.periodo) { doc.setTextColor(...CREME); doc.setFontSize(10); doc.setFont('helvetica', 'normal'); const pl = doc.splitTextToSize(r.rotulo, 140).slice(0, 3); doc.text(pl, W - 40, 64 - (pl.length - 1) * 6, { align: 'right' }); }
   let y = 112;
   // Quadros de resumo
   const kp = [];
@@ -1430,7 +1579,7 @@ async function gerarPDF(r, P) {
 $('#rel-pdf').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
   let doc; try { doc = await gerarPDF(r, cfg().pdf); } catch { return toast('Não consegui preparar o PDF. Tente de novo.', true); }
-  salvarArquivo(`repasse-taxa-${r.de}-a-${r.ate}.pdf`, doc.output('arraybuffer'));
+  salvarArquivo(`repasse-taxa-${r.arquivo}.pdf`, doc.output('arraybuffer'));
 });
 $('#rel-ajustar').addEventListener('click', () => { irPara('config'); setTimeout(() => $('#c-pdf').scrollIntoView({ behavior: 'smooth', block: 'start' }), 60); });
 
@@ -1439,22 +1588,33 @@ $('#rel-ajustar').addEventListener('click', () => { irPara('config'); setTimeout
    ============================================================ */
 function renderEquipe() {
   const sel = $('#eq-cat').value; $('#eq-cat').innerHTML = opcoesCat(cfg().categorias.some((c) => c.id === sel) ? sel : cfg().categorias[0]?.id);
-  const l = D.equipe.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  $('#eq-vazio').hidden = l.length > 0;
-  $('#eq-corpo').innerHTML = l.map((m) => `<tr><td><input value="${esc(m.nome)}" data-nome="${esc(m.id)}" aria-label="Nome" style="width:100%"></td>
-    <td><select data-cat="${esc(m.id)}" aria-label="Categoria">${opcoesCat(m.categoriaId)}</select></td>
-    <td class="acoes"><button class="btn mini perigo" data-rm="${esc(m.id)}">Remover</button></td></tr>`).join('');
-  $$('[data-nome]').forEach((i) => i.addEventListener('change', async () => { const m = D.equipe.find((x) => x.id === i.dataset.nome), n = i.value.trim(); if (m && n && n !== m.nome && (await salvarMembro({ ...m, nome: n }))) toast('Nome atualizado.'); }));
-  $$('[data-cat]').forEach((s) => s.addEventListener('change', async () => { const m = D.equipe.find((x) => x.id === s.dataset.cat); if (m && (await salvarMembro({ ...m, categoriaId: s.value }))) toast('Categoria atualizada.'); }));
-  $$('#eq-corpo [data-rm]').forEach((b) => b.addEventListener('click', async () => {
-    const m = D.equipe.find((x) => x.id === b.dataset.rm);
+  const todos = D.equipe.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  ['fixo', 'diarista'].forEach((t) => {
+    const l = todos.filter((m) => tipoDe(m) === t), outro = t === 'fixo' ? 'diaristas' : 'fixos';
+    $('#eq-n-' + t).textContent = l.length ? `(${l.length})` : '';
+    $('#eq-vazio-' + t).hidden = l.length > 0;
+    $('#eq-' + t).innerHTML = l.map((m) => `<tr><td><input value="${esc(m.nome)}" data-nome="${esc(m.id)}" aria-label="Nome" style="width:100%"></td>
+      <td><select data-cat="${esc(m.id)}" aria-label="Categoria de ${esc(m.nome)}">${opcoesCat(m.categoriaId)}</select></td>
+      <td class="mover"><button class="btn mini" data-mover="${esc(m.id)}" title="Mover para ${outro}">→ ${outro.charAt(0).toUpperCase() + outro.slice(1)}</button></td>
+      <td class="acoes"><button class="btn mini perigo" data-rmeq="${esc(m.id)}">Remover</button></td></tr>`).join('');
+  });
+  $$('#tela-equipe [data-nome]').forEach((i) => i.addEventListener('change', async () => { const m = D.equipe.find((x) => x.id === i.dataset.nome), n = i.value.trim(); if (m && n && n !== m.nome && (await salvarMembro({ ...m, nome: n }))) toast('Nome atualizado.'); }));
+  $$('#tela-equipe [data-cat]').forEach((s) => s.addEventListener('change', async () => { const m = D.equipe.find((x) => x.id === s.dataset.cat); if (m && (await salvarMembro({ ...m, categoriaId: s.value }))) toast('Categoria atualizada.'); }));
+  $$('#tela-equipe [data-mover]').forEach((b) => b.addEventListener('click', async () => {
+    const m = D.equipe.find((x) => x.id === b.dataset.mover); if (!m) return;
+    const novo = tipoDe(m) === 'fixo' ? 'diarista' : 'fixo';
+    if (await salvarMembro({ ...m, tipo: novo })) toast(`${m.nome} agora está em ${novo === 'fixo' ? 'Equipe fixa' : 'Diaristas'}.`);
+  }));
+  $$('#tela-equipe [data-rmeq]').forEach((b) => b.addEventListener('click', async () => {
+    const m = D.equipe.find((x) => x.id === b.dataset.rmeq);
     if (await confirmar('Remover da equipe?', `<b>${esc(m.nome)}</b> sai da lista de marcação rápida. Os dias já salvos continuam com o nome.`, 'Remover')) await excluirMembro(m.id);
   }));
 }
 $('#form-eq').addEventListener('submit', async (e) => {
   e.preventDefault(); const n = $('#eq-nome').value.trim().replace(/\s+/g, ' '); if (!n) return;
   if (D.equipe.some((m) => norm(m.nome) === norm(n))) return toast('Esse nome já está na equipe.', true);
-  if (await salvarMembro({ id: novoId(), nome: n, categoriaId: $('#eq-cat').value })) { $('#eq-nome').value = ''; $('#eq-nome').focus(); toast(n + ' cadastrado.'); }
+  const tipo = $('#eq-tipo').value;
+  if (await salvarMembro({ id: novoId(), nome: n, categoriaId: $('#eq-cat').value, tipo })) { $('#eq-nome').value = ''; $('#eq-nome').focus(); toast(`${n} cadastrado em ${tipo === 'fixo' ? 'Equipe fixa' : 'Diaristas'}.`); }
 });
 
 /* ============================================================
@@ -1517,7 +1677,7 @@ function relatorioExemplo() {
   };
   const [de, ate] = semana(0);
   const lista = [dia(de, 1250, ['Exemplo Ana', 'Exemplo Bruno', 'Exemplo Carla']), dia(ate, 980.4, ['Exemplo Ana', 'Exemplo Bruno'])];
-  return { de, ate, qtd: lista.length, ...Calc.relatorio(lista) };
+  return { de, ate, rotulo: `${dataBR(de)} a ${dataBR(ate)}`, arquivo: `${de}-a-${ate}`, qtd: lista.length, ...Calc.relatorio(lista) };
 }
 $('#c-pdf-previa').addEventListener('click', async () => {
   const real = dadosRel(), r = real.qtd ? real : relatorioExemplo();
@@ -1525,7 +1685,7 @@ $('#c-pdf-previa').addEventListener('click', async () => {
   const url = URL.createObjectURL(doc.output('blob'));
   const w = window.open(url, '_blank');
   if (!w) salvarArquivo('previa-relatorio.pdf', doc.output('arraybuffer'));
-  toast(real.qtd ? `Prévia com a semana de ${dataBR(real.de)} a ${dataBR(real.ate)}.` : 'Prévia com dados de exemplo (ainda não há lançamentos na semana).');
+  toast(real.qtd ? `Prévia com o período ${real.rotulo}.` : 'Prévia com dados de exemplo (ainda não há lançamentos na semana).');
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 });
 $$('input[name=modo]').forEach((r) => r.addEventListener('change', () => { C.modoDivisao = r.value; renderCats(); }));
@@ -1610,7 +1770,7 @@ $('#c-arq-backup').addEventListener('change', async () => {
   const { writeBatch } = fb.fs; const itens = [];
   const c = d.configuracoes;
   itens.push([ref('config', 'geral'), limpo(cfgParaGravar(normCfg(c)))]);
-  equipe.forEach((m) => m && m.nome && itens.push([ref('equipe', m.id || novoId()), { nome: m.nome, categoriaId: m.categoriaId || 'comum' }]));
+  equipe.forEach((m) => m && m.nome && itens.push([ref('equipe', m.id || novoId()), { nome: m.nome, categoriaId: m.categoriaId || 'comum', tipo: tipoDe(m) }]));
   lancs.forEach((l) => l && l.data && itens.push([ref('lancamentos', l.id || novoId()), limpo({ ...l, id: undefined })]));
   const ok = await gravar(async () => { for (let i = 0; i < itens.length; i += 400) { const b = writeBatch(fb.db); itens.slice(i, i + 400).forEach(([r, v]) => b.set(r, v)); await b.commit(); } });
   if (ok) { toast('Cópia restaurada.'); carregarConfigForm(); }
@@ -1620,7 +1780,7 @@ $('#c-arq-backup').addEventListener('change', async () => {
    INÍCIO
    ============================================================ */
 novoForm();
-[$('#rel-de').value, $('#rel-ate').value] = semanaPadrao();
+RP.semIni = semanaPadrao()[0]; RP.mes = mesAtual();
 iniciarFirebase().catch(() => {});
 $('#senha').focus();
 </script>
