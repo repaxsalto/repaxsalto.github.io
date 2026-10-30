@@ -219,6 +219,9 @@ input[type=date] { font-variant-numeric: tabular-nums; }
 .numeros .dist { border-top: 2px solid var(--ferrugem-borda); margin-top: 6px; padding-top: 12px; }
 .numeros .dist dd { font-size: 46px; color: var(--ferrugem-txt); }
 .numeros .dist dt { color: var(--tinta); }
+.numeros .qtd { border-top: 1px solid var(--linha); margin-top: 4px; padding-top: 10px; }
+.numeros .qtd dt { color: var(--tinta); }
+.numeros .qtd dd { font-size: 30px; }
 .regra { font-size: 13px; color: var(--secundario); margin: -6px 0 12px; }
 
 .barra-salvar { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; margin-top: auto;
@@ -547,6 +550,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
             <div><dt>Valor gerado</dt><dd id="r-bruto">R$ 0,00</dd></div>
             <div id="r-rets" style="display:contents"></div>
             <div class="dist"><dt>A distribuir</dt><dd id="r-liq">R$ 0,00</dd></div>
+            <div class="qtd"><dt>Colaboradores selecionados</dt><dd id="r-qtd">0</dd></div>
           </dl>
           <p id="r-regra" class="regra"></p>
           <div class="rolagem">
@@ -1127,6 +1131,7 @@ function atualizarResumo() {
   $('#r-rets').innerHTML = rets.length
     ? rets.map((x) => `<div class="ret"><dt>${esc(x.nome)} · ${pctBR(x.pct)}%</dt><dd>− ${brl(x.valor)}</dd></div>`).join('')
     : '<div class="ret"><dt>Sem retenção</dt><dd>R$ 0,00</dd></div>';
+  $('#r-qtd').textContent = String(F.dia.length);
   $('#r-regra').textContent = r.modo === 'categoria'
     ? 'Por categoria: ' + regras().categorias.map((c) => `${c.nome} ${String(c.pct).replace('.', ',')}%`).join(' · ')
     : n ? `Partes iguais entre ${n} ${n > 1 ? 'pessoas' : 'pessoa'}.` : 'Partes iguais entre quem trabalhou.';
