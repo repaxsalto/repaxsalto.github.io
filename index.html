@@ -166,8 +166,8 @@ main { min-width: 0; display: flex; flex-direction: column; }
 /* ===== Campos ===== */
 .campo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0; }
 .campo > span { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ferrugem-txt); }
-input, select { background: var(--creme); border: 2px solid var(--tracejado); border-radius: 0; padding: 10px 12px; min-height: 46px; min-width: 0; outline: none; }
-input:focus, select:focus { border-color: var(--ferrugem-borda); box-shadow: 3px 3px 0 var(--dourado); }
+input, select, textarea { background: var(--creme); border: 2px solid var(--tracejado); border-radius: 0; padding: 10px 12px; min-height: 46px; min-width: 0; outline: none; }
+input:focus, select:focus, textarea:focus { border-color: var(--ferrugem-borda); box-shadow: 3px 3px 0 var(--dourado); }
 input[type=date] { font-variant-numeric: tabular-nums; }
 .moeda { display: flex; align-items: center; background: var(--creme); border: 2px solid var(--tracejado); }
 .moeda:focus-within { border-color: var(--ferrugem-borda); box-shadow: 3px 3px 0 var(--dourado); }
@@ -285,7 +285,8 @@ tr.detalhe > td { background: var(--celula); padding: 4px 16px 16px 30px; }
 .pdf-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 fieldset.grupo-pdf { border: 2px solid var(--tracejado); background: var(--creme); margin: 0; padding: 10px 14px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
 fieldset.grupo-pdf legend { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ferrugem-txt); padding: 0 6px; }
-fieldset.grupo-pdf input:not([type=checkbox]) { background: var(--papel); }
+fieldset.grupo-pdf input:not([type=checkbox]), fieldset.grupo-pdf textarea { background: var(--papel); }
+textarea { resize: vertical; line-height: 1.45; font-size: 14.5px; min-height: 110px; font-family: inherit; color: inherit; }
 .chk { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 14.5px; line-height: 1.35; min-height: 30px; }
 .chk input { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; flex: none; border: 2px solid var(--ferrugem-borda); background: var(--papel); display: grid; place-items: center; cursor: pointer; }
 .chk input::after { content: ""; width: 10px; height: 10px; background: var(--ferrugem); transform: scale(0); transition: transform .1s; }
@@ -729,7 +730,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
             </fieldset>
             <fieldset class="grupo-pdf"><legend>Rodapé</legend>
               <label class="chk" for="p-ge"><input type="checkbox" id="p-ge" data-pdf="geradoEm">Data em que o PDF foi gerado e número da página</label>
-              <label class="campo" for="p-rodape"><span>Texto no fim do relatório (opcional)</span><input id="p-rodape" data-pdf="rodape" maxlength="300" placeholder="Ex.: Pagamento em dinheiro na segunda-feira."></label>
+              <label class="campo" for="p-rodape"><span>Texto do recibo ou observação (opcional)</span><small class="ajuda">Aparece logo acima da tabela de assinaturas. Sem a tabela, vai no fim do relatório.</small><textarea id="p-rodape" data-pdf="rodape" maxlength="1200" rows="5" placeholder="Ex.: Pagamento em dinheiro na segunda-feira."></textarea></label>
             </fieldset>
           </div>
           <div><button class="btn" id="c-pdf-previa" type="button">Ver como fica o PDF</button></div>
@@ -1379,9 +1380,17 @@ async function gerarPDF(r, P) {
       didParseCell: (d) => { const a = cols[d.column.index]?.st?.halign; if (a && d.section !== 'body') d.cell.styles.halign = a; } });
     y = doc.lastAutoTable.finalY + 28;
   };
-  // Tabela por colaborador
+  const textoLivre = () => {
+    if (!P.rodape.trim()) return;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...TINTA);
+    const linhas = doc.splitTextToSize(P.rodape.trim(), W - 80);
+    if (y + linhas.length * 13 > H - 60) { doc.addPage(); y = 50; }
+    doc.text(linhas, 40, y, { lineHeightFactor: 1.35 }); y += linhas.length * 13 + 16;
+  };
+  // Tabela por colaborador (o texto do recibo vem logo acima das assinaturas)
   if (P.tabColab) {
     titulo('VALOR A RECEBER POR COLABORADOR');
+    y += 4; textoLivre();
     const cols = [{ h: 'COLABORADOR', v: (c) => c.nome }];
     if (P.colCategoria) cols.push({ h: 'CATEGORIA', v: (c) => c.categoria });
     if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: { halign: 'right' } });
@@ -1400,13 +1409,8 @@ async function gerarPDF(r, P) {
     if (P.diaPessoas) cols.push({ h: 'PESSOAS', v: (d) => String(d.pessoas), st: dir });
     tabela(cols, r.dias, r);
   }
-  // Texto livre
-  if (P.rodape.trim()) {
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...TINTA);
-    const linhas = doc.splitTextToSize(P.rodape.trim(), W - 80);
-    if (y + linhas.length * 14 > H - 50) { doc.addPage(); y = 50; }
-    doc.text(linhas, 40, y);
-  }
+  // Sem tabela de colaboradores, o texto vai no fim
+  if (!P.tabColab) textoLivre();
   const n = doc.internal.getNumberOfPages();
   for (let i = 1; i <= n; i++) {
     doc.setPage(i); doc.setFontSize(8); doc.setTextColor(...SEC); doc.setFont('helvetica', 'normal');
