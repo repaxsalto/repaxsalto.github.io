@@ -129,7 +129,8 @@ main { min-width: 0; display: flex; flex-direction: column; }
   max-width: 1320px; width: 100%; flex: 1; display: flex; flex-direction: column; }
 .cabeca { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px 24px; flex-wrap: wrap;
   padding-bottom: 18px; border-bottom: 2px solid var(--ferrugem-borda); margin-bottom: 26px; }
-.cabeca h1 { font-size: clamp(44px, 5.4vw, 76px); margin-top: 4px; }
+.cabeca > div { min-width: 0; }
+.cabeca h1 { font-size: clamp(44px, 5.4vw, 76px); margin-top: 4px; overflow-wrap: anywhere; }
 .cabeca p { margin: 8px 0 0; max-width: 60ch; color: var(--secundario); }
 
 /* ===== Botões ===== */
@@ -212,8 +213,8 @@ input[type=date] { font-variant-numeric: tabular-nums; }
 .resumo { position: sticky; top: 18px; }
 .numeros { display: grid; gap: 4px; margin: 0 0 18px; }
 .numeros div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; }
-.numeros dt { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--secundario); }
-.numeros dd { margin: 0; font-family: var(--f-titulo); font-weight: 800; font-size: 26px; font-variant-numeric: tabular-nums; }
+.numeros dt { min-width: 0; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--secundario); }
+.numeros dd { white-space: nowrap; margin: 0; font-family: var(--f-titulo); font-weight: 800; font-size: 26px; font-variant-numeric: tabular-nums; }
 .numeros .ret dd { color: var(--ferrugem-txt); }
 .numeros .dist { border-top: 2px solid var(--ferrugem-borda); margin-top: 6px; padding-top: 12px; }
 .numeros .dist dd { font-size: 46px; color: var(--ferrugem-txt); }
@@ -249,8 +250,8 @@ tr.detalhe > td { background: var(--celula); padding: 4px 16px 16px 30px; }
 .filtros .campo input { min-height: 44px; padding: 6px 10px; }
 
 /* ===== Relatório ===== */
-.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-bottom: 28px; }
-.kpi { background: var(--papel); border: 2px solid var(--ferrugem-borda); box-shadow: 5px 5px 0 var(--sombra); padding: 14px 16px; border-top: 6px solid var(--dourado); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 20px; margin-bottom: 28px; }
+.kpi { display: flex; flex-direction: column; justify-content: space-between; background: var(--papel); border: 2px solid var(--ferrugem-borda); box-shadow: 5px 5px 0 var(--sombra); padding: 14px 16px; border-top: 6px solid var(--dourado); }
 .kpi span { font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--secundario); }
 .kpi b { display: block; font-family: var(--f-titulo); font-weight: 800; font-size: clamp(28px, 3vw, 40px); line-height: 1.05; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .kpi.destaque { background: var(--ferrugem); border-color: var(--dourado); color: var(--botao-txt); }
@@ -269,12 +270,27 @@ tr.detalhe > td { background: var(--celula); padding: 4px 16px 16px 30px; }
 .opcao b { display: block; }
 .opcao small { color: var(--secundario); font-size: 13.5px; }
 .cats td { padding: 8px 10px; }
+.cats .col-nome { width: 100%; }
 .cats input { min-height: 40px; padding: 6px 10px; width: 100%; }
 .cats .pctin { display: inline-flex; align-items: center; gap: 6px; }
 .cats .pctin input { width: 96px; text-align: right; font-variant-numeric: tabular-nums; }
 .soma { font-family: var(--f-titulo); font-size: 24px; }
 .aviso { color: var(--perigo); font-weight: 700; font-size: 14px; margin: 10px 0 0; }
 .botoes-linha { display: flex; gap: 10px; flex-wrap: wrap; }
+.add-col.add-um { grid-template-columns: minmax(0, 1fr) auto; margin-top: 16px; }
+.pdf-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+fieldset.grupo-pdf { border: 2px solid var(--tracejado); background: var(--creme); margin: 0; padding: 10px 14px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+fieldset.grupo-pdf legend { font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ferrugem-txt); padding: 0 6px; }
+fieldset.grupo-pdf input:not([type=checkbox]) { background: var(--papel); }
+.chk { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 14.5px; line-height: 1.35; min-height: 30px; }
+.chk input { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; flex: none; border: 2px solid var(--ferrugem-borda); background: var(--papel); display: grid; place-items: center; cursor: pointer; }
+.chk input::after { content: ""; width: 10px; height: 10px; background: var(--ferrugem); transform: scale(0); transition: transform .1s; }
+.chk input:checked::after { transform: scale(1); }
+.chk.sub { padding-left: 20px; }
+.chk:has(input:disabled) { opacity: .45; cursor: default; }
+.sujo { align-self: center; margin-right: auto; font-weight: 800; font-size: 13px; color: var(--ferrugem-txt); }
+.sujo::before { content: "● "; color: var(--dourado); }
+.ret-detalhe { margin: 8px 0; font-size: 13.5px; color: var(--secundario); }
 .ajuda { font-size: 13.5px; color: var(--secundario); margin: 0; }
 
 /* ===== Avisos ===== */
@@ -379,12 +395,25 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   .kpi b { font-size: 26px; }
   td, th { padding: 10px 8px; }
   .valor { font-size: 18px; }
-  .cats .pctin input { width: 76px; }
-  .cats td { padding: 6px 4px; }
+  .cats .pctin input { width: 84px; }
+  /* Retenções e categorias: nome em cima, porcentagem e remover embaixo */
+  table.cats, table.cats tbody, table.cats tfoot { display: block; }
+  table.cats thead { display: none; }
+  table.cats tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--linha); }
+  table.cats tbody td { padding: 0; border: 0; }
+  table.cats tbody td:first-child { grid-column: 1 / -1; }
+  table.cats tbody td.num { text-align: left; }
+  table.cats tbody td[colspan] { grid-column: 1 / -1; }
+  table.cats tfoot tr { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; }
+  table.cats tfoot td { padding: 0; border: 0; }
+  table.cats tfoot td:empty { display: none; }
   .add-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .add-col input { grid-column: 1 / -1; }
-  #form-cat.add-col { grid-template-columns: minmax(0, 1fr) !important; }
-  #form-cat input { grid-column: auto; }
+  .add-col.add-um { grid-template-columns: minmax(0, 1fr); }
+  .add-col.add-um input { grid-column: auto; }
+  .barra-salvar.rel { position: static; display: grid; grid-template-columns: 1fr 1fr; box-shadow: none; }
+  .barra-salvar.rel .btn.grande { font-size: 14px; letter-spacing: .04em; }
+  .barra-salvar .sujo { flex: 1.2; }
 }
 @media (max-width: 420px) {
   .lista-dia li { grid-template-columns: minmax(0, 1fr) minmax(0, 112px) 40px; padding-left: 10px; }
@@ -516,7 +545,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           <h2>Divisão</h2>
           <dl class="numeros">
             <div><dt>Valor gerado</dt><dd id="r-bruto">R$ 0,00</dd></div>
-            <div class="ret"><dt>Retido p/ encargos · <span id="r-pct">20</span>%</dt><dd id="r-ret">R$ 0,00</dd></div>
+            <div id="r-rets" style="display:contents"></div>
             <div class="dist"><dt>A distribuir</dt><dd id="r-liq">R$ 0,00</dd></div>
           </dl>
           <p id="r-regra" class="regra"></p>
@@ -578,9 +607,10 @@ footer.rodape img { width: 150px; height: auto; display: block; }
         </div>
       </header>
       <div id="rel-conteudo"></div>
-      <div class="barra-salvar">
+      <div class="barra-salvar rel">
         <button class="btn" id="rel-copiar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="9" height="9"/><path d="M11 5V2H2v9h3"/></svg>Copiar para WhatsApp</button>
         <button class="btn" id="rel-excel">Baixar Excel</button>
+        <button class="btn" id="rel-ajustar" type="button">Ajustar PDF</button>
         <button class="btn principal grande" id="rel-pdf">Baixar PDF</button>
       </div>
     </section>
@@ -624,11 +654,22 @@ footer.rodape img { width: 150px; height: auto; display: block; }
       </header>
       <div class="grade-config">
         <div class="painel listrado pilha">
-          <h2>Retenção</h2>
-          <label class="campo" for="c-ret"><span>Porcentagem retida para encargos trabalhistas</span>
-            <div class="moeda pct"><input id="c-ret" type="number" min="0" max="100" step="0.01"><i style="padding:0 16px 0 4px">%</i></div>
-          </label>
+          <h2>Retenções</h2>
+          <p class="ajuda">Cada retenção é uma porcentagem do valor gerado no dia, separada antes da divisão entre a equipe.</p>
+          <div class="rolagem">
+            <table class="cats">
+              <thead><tr><th class="col-nome">Retenção</th><th class="num">% do dia</th><th></th></tr></thead>
+              <tbody id="c-rets"></tbody>
+              <tfoot><tr class="total"><td>Total retido</td><td class="num"><span id="c-ret-soma" class="soma">0%</span></td><td></td></tr></tfoot>
+            </table>
+          </div>
+          <form id="form-ret" class="add-col add-um" style="margin-top:0">
+            <label class="sr" for="c-nova-ret">Nova retenção</label>
+            <input id="c-nova-ret" placeholder="Nova retenção (ex.: Quebra de caixa)" autocomplete="off">
+            <button class="btn" type="submit">Adicionar retenção</button>
+          </form>
           <p class="ajuda" id="c-exemplo"></p>
+          <p id="c-ret-aviso" class="aviso" hidden></p>
         </div>
 
         <div class="painel listrado">
@@ -641,17 +682,54 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           <h2>Categorias</h2>
           <div class="rolagem">
             <table class="cats">
-              <thead><tr><th>Categoria</th><th class="num">% do valor a distribuir</th><th></th></tr></thead>
+              <thead><tr><th class="col-nome">Categoria</th><th class="num">% do valor a distribuir</th><th></th></tr></thead>
               <tbody id="c-cats"></tbody>
               <tfoot><tr class="total"><td>Total</td><td class="num"><span id="c-soma" class="soma">100%</span></td><td></td></tr></tfoot>
             </table>
           </div>
-          <form id="form-cat" class="add-col" style="grid-template-columns:minmax(0,1fr) auto;margin-top:16px">
+          <form id="form-cat" class="add-col add-um">
             <label class="sr" for="c-nova">Nova categoria</label>
             <input id="c-nova" placeholder="Nova categoria (ex.: Bar, Caixa, Guarita)" autocomplete="off">
             <button class="btn" type="submit">Adicionar categoria</button>
           </form>
           <p id="c-aviso" class="aviso" hidden></p>
+        </div>
+
+        <div class="painel listrado largo pilha" id="c-pdf">
+          <h2>PDF do relatório</h2>
+          <p class="ajuda">Escolha o que aparece no PDF da semana. Vale para o botão Baixar PDF do relatório semanal.</p>
+          <div class="pdf-grade">
+            <fieldset class="grupo-pdf"><legend>Cabeçalho</legend>
+              <label class="campo" for="p-titulo"><span>Título</span><input id="p-titulo" data-pdf="titulo" maxlength="60"></label>
+              <label class="campo" for="p-linha"><span>Linha acima do título</span><input id="p-linha" data-pdf="linhaTopo" maxlength="80"></label>
+              <label class="chk" for="p-logo"><input type="checkbox" id="p-logo" data-pdf="logo">Sol do Salto</label>
+              <label class="chk" for="p-periodo"><input type="checkbox" id="p-periodo" data-pdf="periodo">Período (datas da semana)</label>
+            </fieldset>
+            <fieldset class="grupo-pdf"><legend>Quadros de resumo</legend>
+              <label class="chk" for="p-cg"><input type="checkbox" id="p-cg" data-pdf="cardGerado">Total gerado</label>
+              <label class="chk" for="p-cr"><input type="checkbox" id="p-cr" data-pdf="cardRetencoes">Retenções</label>
+              <label class="chk sub" for="p-rs"><input type="checkbox" id="p-rs" data-pdf="retSeparadas" data-pai="cardRetencoes">Um quadro para cada retenção (desmarcado: só o total retido)</label>
+              <label class="chk" for="p-cp"><input type="checkbox" id="p-cp" data-pdf="cardPagar">Total a pagar</label>
+            </fieldset>
+            <fieldset class="grupo-pdf"><legend>Tabela por colaborador</legend>
+              <label class="chk" for="p-tc"><input type="checkbox" id="p-tc" data-pdf="tabColab">Mostrar a tabela</label>
+              <label class="chk sub" for="p-ccat"><input type="checkbox" id="p-ccat" data-pdf="colCategoria" data-pai="tabColab">Categoria</label>
+              <label class="chk sub" for="p-cdias"><input type="checkbox" id="p-cdias" data-pdf="colDias" data-pai="tabColab">Dias trabalhados</label>
+              <label class="chk sub" for="p-cass"><input type="checkbox" id="p-cass" data-pdf="colAssinatura" data-pai="tabColab">Espaço para assinatura</label>
+            </fieldset>
+            <fieldset class="grupo-pdf"><legend>Tabela dia a dia</legend>
+              <label class="chk" for="p-td"><input type="checkbox" id="p-td" data-pdf="tabDias">Mostrar a tabela</label>
+              <label class="chk sub" for="p-dg"><input type="checkbox" id="p-dg" data-pdf="diaGerado" data-pai="tabDias">Valor gerado</label>
+              <label class="chk sub" for="p-dr"><input type="checkbox" id="p-dr" data-pdf="diaRetido" data-pai="tabDias">Valor retido</label>
+              <label class="chk sub" for="p-dd"><input type="checkbox" id="p-dd" data-pdf="diaDistribuido" data-pai="tabDias">Valor distribuído</label>
+              <label class="chk sub" for="p-dp"><input type="checkbox" id="p-dp" data-pdf="diaPessoas" data-pai="tabDias">Quantidade de pessoas</label>
+            </fieldset>
+            <fieldset class="grupo-pdf"><legend>Rodapé</legend>
+              <label class="chk" for="p-ge"><input type="checkbox" id="p-ge" data-pdf="geradoEm">Data em que o PDF foi gerado e número da página</label>
+              <label class="campo" for="p-rodape"><span>Texto no fim do relatório (opcional)</span><input id="p-rodape" data-pdf="rodape" maxlength="300" placeholder="Ex.: Pagamento em dinheiro na segunda-feira."></label>
+            </fieldset>
+          </div>
+          <div><button class="btn" id="c-pdf-previa" type="button">Ver como fica o PDF</button></div>
         </div>
 
         <div class="painel listrado pilha">
@@ -669,6 +747,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
         </div>
       </div>
       <div class="barra-salvar">
+        <span id="c-sujo" class="sujo" hidden>Alterações não salvas</span>
         <button class="btn principal grande" id="c-salvar">Salvar configurações</button>
       </div>
     </section>
@@ -720,9 +799,19 @@ const Calc = (() => {
     for (let k = 0; k < sobra; k++) base[ordem[k % ordem.length][1]]++;
     return base;
   }
-  function calcular({ valorBruto, retencaoPct, colaboradores, modo, categorias }) {
-    const bruto = toC(valorBruto), pct = Math.min(Math.max(Number(retencaoPct) || 0, 0), 100);
-    const ret = Math.round(bruto * pct / 100), liq = bruto - ret;
+  const retPadrao = (pct) => [{ id: 'encargos', nome: 'Encargos trabalhistas', pct: Number(pct) || 0 }];
+  // retenções gravadas num lançamento (lançamentos antigos só tinham "encargos")
+  function retDe(l) {
+    if (Array.isArray(l.retencoes)) return l.retencoes;
+    return [{ id: 'encargos', nome: 'Encargos trabalhistas', pct: Number(l.retencaoPct) || 0, valor: Number(l.valorRetido) || 0 }];
+  }
+  function calcular({ valorBruto, retencoes, retencaoPct, colaboradores, modo, categorias }) {
+    const bruto = toC(valorBruto);
+    const rs = (Array.isArray(retencoes) ? retencoes : retPadrao(retencaoPct))
+      .map((r) => ({ id: r.id, nome: r.nome, pct: Math.min(Math.max(Number(r.pct) || 0, 0), 100) }));
+    let ret = 0;
+    const rv = rs.map((r) => { let v = Math.round(bruto * r.pct / 100); if (ret + v > bruto) v = bruto - ret; ret += v; return { ...r, valor: fromC(v) }; });
+    const liq = bruto - ret;
     modo = modo === 'categoria' ? 'categoria' : 'igual';
     let pesos;
     if (modo === 'categoria') {
@@ -731,15 +820,19 @@ const Calc = (() => {
     } else pesos = colaboradores.map(() => 1);
     const v = distribuir(liq, pesos);
     return {
-      valorBruto: fromC(bruto), retencaoPct: pct, valorRetido: fromC(ret), valorLiquido: fromC(liq), modo,
+      valorBruto: fromC(bruto), retencoes: rv, retencaoPct: Math.round(rs.reduce((a, r) => a + r.pct, 0) * 100) / 100,
+      valorRetido: fromC(ret), valorLiquido: fromC(liq), modo,
       itens: colaboradores.map((c, i) => ({ nome: c.nome, categoriaId: c.categoriaId, categoria: (categorias.find((x) => x.id === c.categoriaId) || {}).nome || '', valor: fromC(v[i]) })),
     };
   }
   function relatorio(lista) {
-    const p = {}; let b = 0, r = 0, l = 0; const dias = [];
+    const p = {}, rt = new Map(); let b = 0, r = 0, l = 0; const dias = [];
+    const chave = (x) => x.id || String(x.nome || '').trim().toLowerCase();
     lista.slice().sort((x, y) => x.data.localeCompare(y.data)).forEach((x) => {
       b += toC(x.valorBruto); r += toC(x.valorRetido); l += toC(x.valorLiquido);
-      dias.push({ data: x.data, valorBruto: x.valorBruto, valorRetido: x.valorRetido, valorLiquido: x.valorLiquido, pessoas: x.colaboradores.length });
+      const rd = retDe(x).map((z) => ({ id: chave(z), nome: z.nome, valor: Number(z.valor) || 0 }));
+      rd.forEach((z) => { const o = rt.get(z.id) || { id: z.id, nome: z.nome, c: 0 }; o.c += toC(z.valor); o.nome = z.nome; rt.set(z.id, o); });
+      dias.push({ data: x.data, valorBruto: x.valorBruto, valorRetido: x.valorRetido, valorLiquido: x.valorLiquido, pessoas: x.colaboradores.length, retencoes: rd });
       x.colaboradores.forEach((c) => {
         const k = c.nome.trim().toLocaleLowerCase('pt-BR');
         p[k] = p[k] || { nome: c.nome.trim(), cats: new Set(), dias: 0, c: 0 };
@@ -748,10 +841,11 @@ const Calc = (() => {
     });
     return {
       totalBruto: fromC(b), totalRetido: fromC(r), totalLiquido: fromC(l), dias,
+      retencoes: [...rt.values()].map((o) => ({ id: o.id, nome: o.nome, valor: fromC(o.c) })),
       colaboradores: Object.values(p).map((x) => ({ nome: x.nome, categoria: [...x.cats].join(', '), dias: x.dias, valor: fromC(x.c) })).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR')),
     };
   }
-  return { calcular, relatorio, parseValor };
+  return { calcular, relatorio, parseValor, retDe };
 })();
 
 /* ============================================================
@@ -813,11 +907,40 @@ aplicarTema(lerTema());
    ============================================================ */
 const EMAIL_PAINEL = 'diretoria@repaxsalto.github.io';
 const FBV = '10.12.2';
-const CFG_PADRAO = {
-  retencaoPct: 20, modoDivisao: 'igual',
-  categorias: [{ id: 'comum', nome: 'Comum', pct: 60 }, { id: 'diretoria', nome: 'Diretoria', pct: 20 }, { id: 'cozinha', nome: 'Cozinha', pct: 20 }],
+const PDF_PADRAO = {
+  titulo: 'Repasse da semana', linhaTopo: 'Salto das Nuvens · Taxa de atendimento', logo: true, periodo: true,
+  cardGerado: true, cardRetencoes: true, retSeparadas: true, cardPagar: true,
+  tabColab: true, colCategoria: true, colDias: true, colAssinatura: true,
+  tabDias: true, diaGerado: true, diaRetido: true, diaDistribuido: true, diaPessoas: true,
+  geradoEm: true, rodape: '',
 };
-const D = { cfg: { ...CFG_PADRAO }, equipe: [], lanc: [], pronto: false };
+const RET_BONIFICACAO = { id: 'bonificacao', nome: 'Bonificação de colaboradores', pct: 0 };
+const CFG_PADRAO = {
+  modoDivisao: 'igual',
+  retencoes: [{ id: 'encargos', nome: 'Encargos trabalhistas', pct: 20 }, RET_BONIFICACAO],
+  categorias: [{ id: 'comum', nome: 'Comum', pct: 60 }, { id: 'diretoria', nome: 'Diretoria', pct: 20 }, { id: 'cozinha', nome: 'Cozinha', pct: 20 }],
+  pdf: PDF_PADRAO,
+};
+// Ajusta configurações salvas antes das várias retenções (só tinham retencaoPct)
+function normCfg(raw) {
+  raw = raw || {};
+  const c = JSON.parse(JSON.stringify({ ...CFG_PADRAO, ...raw }));
+  if (!Array.isArray(raw.retencoes)) c.retencoes = [{ id: 'encargos', nome: 'Encargos trabalhistas', pct: Number(raw.retencaoPct ?? 20) || 0 }, { ...RET_BONIFICACAO }];
+  c.pdf = { ...PDF_PADRAO, ...(raw.pdf || {}) };
+  if (!Array.isArray(c.categorias) || !c.categorias.length) c.categorias = JSON.parse(JSON.stringify(CFG_PADRAO.categorias));
+  return c;
+}
+function cfgParaGravar(c) {
+  const retencoes = c.retencoes.map((r) => ({ id: r.id, nome: String(r.nome).trim(), pct: Number(r.pct) || 0 }));
+  return {
+    modoDivisao: c.modoDivisao === 'categoria' ? 'categoria' : 'igual',
+    categorias: c.categorias.map((k) => ({ id: k.id, nome: String(k.nome).trim(), pct: Number(k.pct) || 0 })),
+    retencoes, retencaoPct: Math.round(retencoes.reduce((a, r) => a + r.pct, 0) * 100) / 100,
+    pdf: { ...PDF_PADRAO, ...(c.pdf || {}) },
+  };
+}
+const pctBR = (n) => String(Math.round((Number(n) || 0) * 100) / 100).replace('.', ',');
+const D = { cfg: normCfg(), equipe: [], lanc: [], pronto: false };
 const cfg = () => D.cfg;
 let fb = null, assinaturas = [];
 
@@ -840,7 +963,7 @@ async function iniciarFirebase() {
 function assinar() {
   const { doc, collection, onSnapshot } = fb.fs;
   const falha = (e) => toast(e && e.code === 'permission-denied' ? 'Sem permissão para ler os dados. Bloqueie e entre de novo.' : 'Não consegui ler os dados agora. Confira a internet.', true);
-  assinaturas.push(onSnapshot(doc(fb.db, 'config', 'geral'), (s) => { D.cfg = { ...CFG_PADRAO, ...(s.exists() ? s.data() : {}) }; renderTudo(); }, falha));
+  assinaturas.push(onSnapshot(doc(fb.db, 'config', 'geral'), (s) => { D.cfg = normCfg(s.exists() ? s.data() : null); if (abaAtual === 'config' && !sujo) carregarConfigForm(); renderTudo(); }, falha));
   assinaturas.push(onSnapshot(collection(fb.db, 'equipe'), (s) => { D.equipe = s.docs.map((d) => ({ ...d.data(), id: d.id })); renderTudo(); }, falha));
   assinaturas.push(onSnapshot(collection(fb.db, 'lancamentos'), (s) => { D.lanc = s.docs.map((d) => ({ ...d.data(), id: d.id })); D.pronto = true; renderTudo(); }, falha));
 }
@@ -852,7 +975,7 @@ function entrou() {
 }
 function saiu() {
   assinaturas.forEach((u) => u()); assinaturas = [];
-  D.cfg = { ...CFG_PADRAO }; D.equipe = []; D.lanc = []; D.pronto = false;
+  D.cfg = normCfg(); sujo = false; D.equipe = []; D.lanc = []; D.pronto = false;
   novoForm();
   $('#app').hidden = true; $('#login').hidden = false; $('#senha').focus();
 }
@@ -926,7 +1049,13 @@ function irPara(a) {
   if (a === 'config') carregarConfigForm();
   renderTudo(); window.scrollTo(0, 0);
 }
-$$('.nav button').forEach((b) => b.addEventListener('click', () => irPara(b.dataset.aba)));
+let sujo = false;
+async function podeSairDaConfig(destino) {
+  if (abaAtual !== 'config' || !sujo || destino === 'config') return true;
+  if (!(await confirmar('Sair sem salvar?', 'As mudanças em Configurações ainda não foram salvas e serão perdidas.', 'Sair sem salvar'))) return false;
+  sujo = false; return true;
+}
+$$('.nav button').forEach((b) => b.addEventListener('click', async () => { if (await podeSairDaConfig(b.dataset.aba)) irPara(b.dataset.aba); }));
 function renderTudo() {
   if ($('#app').hidden) return;
   ({ lancamento: renderLanc, salvos: renderSalvos, relatorio: renderRel, equipe: renderEquipe, config: renderCats })[abaAtual]();
@@ -945,7 +1074,7 @@ function novoForm() {
   setOrigem('manual');
   $('#faixa-edicao').hidden = true; $('#titulo-lanc').textContent = 'Lançamento do dia'; $('#salvar').textContent = 'Salvar';
 }
-const regras = () => F.regras || { retencaoPct: cfg().retencaoPct, modo: cfg().modoDivisao, categorias: cfg().categorias };
+const regras = () => F.regras || { retencoes: cfg().retencoes, modo: cfg().modoDivisao, categorias: cfg().categorias };
 function setOrigem(o) { F.origem = o; $$('.seg [data-origem]').forEach((b) => b.classList.toggle('ativo', b.dataset.origem === o)); $('#box-importar').hidden = o !== 'relatorio'; }
 $$('.seg [data-origem]').forEach((b) => b.addEventListener('click', () => setOrigem(b.dataset.origem)));
 $('#l-valor').addEventListener('input', atualizarResumo);
@@ -988,13 +1117,16 @@ function renderDia() {
   $('#vazio-dia').hidden = F.dia.length > 0;
   atualizarResumo();
 }
-function calcForm() { const r = regras(); return Calc.calcular({ valorBruto: Calc.parseValor($('#l-valor').value), retencaoPct: r.retencaoPct, colaboradores: F.dia, modo: r.modo, categorias: r.categorias }); }
+function calcForm() { const r = regras(); return Calc.calcular({ valorBruto: Calc.parseValor($('#l-valor').value), retencoes: r.retencoes, colaboradores: F.dia, modo: r.modo, categorias: r.categorias }); }
 function atualizarResumo() {
   const r = calcForm(), n = F.dia.length;
   $('#m-liq').textContent = brl(r.valorLiquido);
   $('#m-info').textContent = !n ? 'ninguém ainda' : (n === 1 ? '1 pessoa' : `${n} pessoas`) + (r.modo === 'igual' && r.valorLiquido ? ` · ${brl(r.itens[0].valor)} cada` : ' · por categoria');
-  $('#r-bruto').textContent = brl(r.valorBruto); $('#r-pct').textContent = String(r.retencaoPct).replace('.', ',');
-  $('#r-ret').textContent = '− ' + brl(r.valorRetido); $('#r-liq').textContent = brl(r.valorLiquido);
+  $('#r-bruto').textContent = brl(r.valorBruto); $('#r-liq').textContent = brl(r.valorLiquido);
+  const rets = r.retencoes.filter((x) => x.pct > 0);
+  $('#r-rets').innerHTML = rets.length
+    ? rets.map((x) => `<div class="ret"><dt>${esc(x.nome)} · ${pctBR(x.pct)}%</dt><dd>− ${brl(x.valor)}</dd></div>`).join('')
+    : '<div class="ret"><dt>Sem retenção</dt><dd>R$ 0,00</dd></div>';
   $('#r-regra').textContent = r.modo === 'categoria'
     ? 'Por categoria: ' + regras().categorias.map((c) => `${c.nome} ${String(c.pct).replace('.', ',')}%`).join(' · ')
     : n ? `Partes iguais entre ${n} ${n > 1 ? 'pessoas' : 'pessoa'}.` : 'Partes iguais entre quem trabalhou.';
@@ -1018,7 +1150,7 @@ $('#salvar').addEventListener('click', async () => {
   const btn = $('#salvar'); btn.disabled = true;
   const editando = !!F.editId;
   const l = {
-    id: F.editId || novoId(), data, valorBruto: r.valorBruto, retencaoPct: r.retencaoPct, valorRetido: r.valorRetido, valorLiquido: r.valorLiquido,
+    id: F.editId || novoId(), data, valorBruto: r.valorBruto, retencoes: r.retencoes, retencaoPct: r.retencaoPct, valorRetido: r.valorRetido, valorLiquido: r.valorLiquido,
     modo: r.modo, categorias: rg.categorias.map((c) => ({ id: c.id, nome: c.nome, pct: Number(c.pct) || 0 })), colaboradores: r.itens,
     origem: F.origem, arquivo: F.origem === 'relatorio' ? F.arquivo || null : null, obs: $('#l-obs').value.trim(),
     criadoEm: editando ? (D.lanc.find((x) => x.id === F.editId) || {}).criadoEm || new Date().toISOString() : new Date().toISOString(), atualizadoEm: new Date().toISOString(),
@@ -1035,7 +1167,7 @@ $('#salvar').addEventListener('click', async () => {
 function editar(id) {
   const l = D.lanc.find((x) => x.id === id); if (!l) return;
   irPara('lancamento');
-  F = { editId: l.id, regras: { retencaoPct: l.retencaoPct, modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId })) };
+  F = { editId: l.id, regras: { retencoes: Calc.retDe(l), modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId })) };
   setOrigem('manual');
   $('#l-data').value = l.data; $('#l-valor').value = num2(l.valorBruto); $('#l-obs').value = l.obs || '';
   $('#faixa-edicao').hidden = false; $('#edicao-data').textContent = dataBR(l.data); $('#titulo-lanc').textContent = 'Editar lançamento'; $('#salvar').textContent = 'Salvar alterações';
@@ -1101,6 +1233,10 @@ function analisar(texto) {
    LANÇAMENTOS SALVOS
    ============================================================ */
 let aberto = null;
+function retTexto(rs) {
+  const v = rs.filter((x) => Number(x.valor) > 0);
+  return v.length ? `<p class="ret-detalhe">Retido: ${v.map((x) => `${esc(x.nome)} ${pctBR(x.pct)}% = <b>${brl(x.valor)}</b>`).join(' · ')}</p>` : '';
+}
 function renderSalvos() {
   const de = $('#s-de').value, ate = $('#s-ate').value;
   const lista = D.lanc.filter((l) => (!de || l.data >= de) && (!ate || l.data <= ate)).sort((a, b) => b.data.localeCompare(a.data) || String(b.criadoEm).localeCompare(String(a.criadoEm)));
@@ -1111,12 +1247,12 @@ function renderSalvos() {
     <tr class="principal" data-id="${esc(l.id)}" tabindex="0" aria-expanded="${aberto === l.id}">
       <td class="c-data"><div class="data-grande">${dataBR(l.data)}<small>${diaSem(l.data)}</small></div></td>
       <td class="num c-gerado" data-label="Gerado">${brl(l.valorBruto)}</td>
-      <td class="num c-retido" data-label="Retido">${brl(l.valorRetido)} <small class="muted">${String(l.retencaoPct).replace('.', ',')}%</small></td>
+      <td class="num c-retido" data-label="Retido">${brl(l.valorRetido)} <small class="muted">${pctBR(l.retencaoPct)}%</small></td>
       <td class="num c-dist" data-label="Distribuído"><span class="valor">${brl(l.valorLiquido)}</span></td>
       <td class="num c-pessoas" data-label="Pessoas">${l.colaboradores.length}</td>
       <td class="c-tags"><span class="tag">${l.modo === 'categoria' ? 'Por categoria' : 'Igual'}</span>${l.origem === 'relatorio' ? ' <span class="tag" title="' + esc(l.arquivo || '') + '">Relatório</span>' : ''}</td>
       <td class="acoes c-acoes"><button class="btn mini" data-ed="${esc(l.id)}">Editar</button><button class="btn mini perigo" data-ex="${esc(l.id)}">Excluir</button></td>
-    </tr>${aberto === l.id ? `<tr class="detalhe"><td colspan="7">${l.obs ? `<p class="muted" style="margin:8px 0">Obs.: ${esc(l.obs)}</p>` : ''}
+    </tr>${aberto === l.id ? `<tr class="detalhe"><td colspan="7">${retTexto(Calc.retDe(l))}${l.obs ? `<p class="muted" style="margin:8px 0">Obs.: ${esc(l.obs)}</p>` : ''}
       <table><thead><tr><th>Colaborador</th><th>Categoria</th><th class="num">Recebeu</th></tr></thead><tbody>
       ${l.colaboradores.map((c) => `<tr><td>${esc(c.nome)}</td><td>${esc(c.categoria)}</td><td class="num">${brl(c.valor)}</td></tr>`).join('')}</tbody></table></td></tr>` : ''}`).join('');
   $$('#s-corpo tr.principal').forEach((tr) => {
@@ -1137,6 +1273,7 @@ $('#s-todos').addEventListener('click', () => { $('#s-de').value = $('#s-ate').v
 /* ============================================================
    RELATÓRIO SEMANAL
    ============================================================ */
+const retsComValor = (r) => { const v = r.retencoes.filter((x) => x.valor > 0); return v.length ? v : [{ nome: 'Retido', valor: 0 }]; };
 function dadosRel() { const de = $('#rel-de').value, ate = $('#rel-ate').value; const l = D.lanc.filter((x) => x.data >= de && x.data <= ate); return { de, ate, qtd: l.length, ...Calc.relatorio(l) }; }
 function renderRel() {
   const r = dadosRel();
@@ -1144,7 +1281,7 @@ function renderRel() {
   $('#rel-conteudo').innerHTML = `
     <div class="kpis">
       <div class="kpi"><span>Total gerado</span><b>${brl(r.totalBruto)}</b></div>
-      <div class="kpi"><span>Retido p/ encargos</span><b>${brl(r.totalRetido)}</b></div>
+      ${retsComValor(r).map((x) => `<div class="kpi"><span>${esc(x.nome)}</span><b>${brl(x.valor)}</b></div>`).join('')}
       <div class="kpi destaque"><span>Total a pagar</span><b>${brl(r.totalLiquido)}</b></div>
       <div class="kpi"><span>Dias lançados</span><b>${r.dias.length}</b></div>
     </div>
@@ -1166,7 +1303,8 @@ function semanaPadrao() { const dow = new Date().getDay(); return semana(dow ===
 
 function textoRel(r) {
   return `*Taxa de atendimento · ${dataBR(r.de)} a ${dataBR(r.ate)}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.valor)}`).join('\n') +
-    `\n\nTotal gerado: ${brl(r.totalBruto)}\nRetido p/ encargos: ${brl(r.totalRetido)}\n*Total a pagar: ${brl(r.totalLiquido)}*`;
+    `\n\nTotal gerado: ${brl(r.totalBruto)}\n` + r.retencoes.filter((x) => x.valor > 0).map((x) => `${x.nome}: ${brl(x.valor)}\n`).join('') +
+    `*Total a pagar: ${brl(r.totalLiquido)}*`;
 }
 $('#rel-copiar').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
@@ -1174,7 +1312,6 @@ $('#rel-copiar').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(t); toast('Resumo copiado. Cole no WhatsApp.'); }
   catch { await confirmar('Copie o resumo', `<textarea id="copia" readonly style="width:100%;min-height:200px;font:inherit;padding:10px;background:var(--creme);color:var(--tinta);border:2px solid var(--tracejado)">${esc(t)}</textarea>`, 'Fechar'); }
 });
-setTimeout(() => {}, 0);
 
 function salvarArquivo(nome, dados) {
   const tipos = { pdf: 'application/pdf', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', json: 'application/json' };
@@ -1190,48 +1327,96 @@ $('#rel-excel').addEventListener('click', async () => {
   const wb = XLSX.utils.book_new();
   const add = (nome, linhas) => { const ws = XLSX.utils.aoa_to_sheet(linhas); ws['!cols'] = linhas[0].map((_, i) => ({ wch: Math.max(...linhas.map((l) => String(l[i] ?? '').length)) + 2 })); XLSX.utils.book_append_sheet(wb, ws, nome); };
   add('A pagar', [['Colaborador', 'Categoria', 'Dias', 'Valor a receber (R$)'], ...r.colaboradores.map((c) => [c.nome, c.categoria, c.dias, c.valor]), ['Total', '', '', r.totalLiquido]]);
-  add('Resumo', [['Período', `${dataBR(r.de)} a ${dataBR(r.ate)}`], ['Total gerado (R$)', r.totalBruto], ['Retido p/ encargos (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
-  add('Por dia', [['Data', 'Gerado (R$)', 'Retido (R$)', 'Distribuído (R$)', 'Pessoas'], ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, d.valorRetido, d.valorLiquido, d.pessoas])]);
+  add('Resumo', [['Período', `${dataBR(r.de)} a ${dataBR(r.ate)}`], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${x.nome} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
+  add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
+    ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
   await salvarArquivo(`repasse-taxa-${r.de}-a-${r.ate}.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
 });
+async function gerarPDF(r, P) {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  P = { ...PDF_PADRAO, ...(P || {}) };
+  const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const TERRA = [36, 30, 25], FERR = [169, 68, 44], DOUR = [230, 164, 61], CREME = [255, 245, 229], TINTA = [56, 33, 24], SEC = [95, 73, 55];
+  // Cabeçalho
+  doc.setFillColor(...TERRA); doc.rect(0, 0, W, 92, 'F'); doc.setFillColor(...FERR); doc.rect(0, 0, W, 6, 'F');
+  const tx = P.logo ? 100 : 40;
+  if (P.logo) { try { doc.addImage(SOL, 'PNG', 40, 24, 46, 46); } catch {} }
+  if (P.linhaTopo.trim()) { doc.setTextColor(...DOUR); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(P.linhaTopo.trim().toUpperCase(), tx, P.titulo.trim() ? 40 : 54); }
+  if (P.titulo.trim()) { doc.setTextColor(...CREME); doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.text(P.titulo.trim().toUpperCase(), tx, 64, { maxWidth: W - tx - (P.periodo ? 150 : 40) }); }
+  if (P.periodo) { doc.setTextColor(...CREME); doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.text(`${dataBR(r.de)} a ${dataBR(r.ate)}`, W - 40, 64, { align: 'right' }); }
+  let y = 112;
+  // Quadros de resumo
+  const kp = [];
+  if (P.cardGerado) kp.push(['TOTAL GERADO', r.totalBruto, false]);
+  if (P.cardRetencoes) {
+    if (P.retSeparadas) retsComValor(r).forEach((x) => kp.push([String(x.nome).toUpperCase(), x.valor, false]));
+    else kp.push(['TOTAL RETIDO', r.totalRetido, false]);
+  }
+  if (P.cardPagar) kp.push(['TOTAL A PAGAR', r.totalLiquido, true]);
+  const porLinha = Math.ceil(kp.length / Math.ceil(kp.length / 4 || 1));
+  for (let i = 0; i < kp.length; i += porLinha) {
+    const linha = kp.slice(i, i + porLinha), k = linha.length, bw = (W - 80 - 12 * (k - 1)) / k;
+    linha.forEach(([rot, val, dest], j) => {
+      const x = 40 + j * (bw + 12);
+      doc.setFillColor(211, 152, 73); doc.rect(x + 4, y + 4, bw, 56, 'F');
+      doc.setFillColor(...(dest ? FERR : CREME)); doc.setDrawColor(...FERR); doc.setLineWidth(1.5); doc.rect(x, y, bw, 56, 'FD');
+      doc.setTextColor(...(dest ? CREME : SEC)); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+      doc.text(doc.splitTextToSize(rot, bw - 20).slice(0, 2), x + 10, y + 14);
+      doc.setTextColor(...(dest ? CREME : TINTA)); doc.setFontSize(k > 3 ? 13 : 16); doc.text(brl(val), x + 10, y + 46);
+    });
+    y += 72;
+  }
+  if (kp.length) y += 8;
+  const est = { headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { textColor: TINTA, fontSize: 10 }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' }, margin: { left: 40, right: 40 } };
+  const titulo = (t) => { if (y > H - 120) { doc.addPage(); y = 50; } doc.setTextColor(...FERR); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(t, 40, y); y += 10; };
+  const tabela = (cols, linhas, totais, extra = {}) => {
+    const st = {}; cols.forEach((c, i) => { if (c.st) st[i] = c.st; });
+    doc.autoTable({ ...est, ...extra, startY: y, head: [cols.map((c) => c.h)], body: linhas.map((l) => cols.map((c) => c.v(l))), foot: [cols.map((c, i) => (i === 0 ? 'TOTAL' : c.t ? c.t(totais) : ''))], columnStyles: st,
+      didParseCell: (d) => { const a = cols[d.column.index]?.st?.halign; if (a && d.section !== 'body') d.cell.styles.halign = a; } });
+    y = doc.lastAutoTable.finalY + 28;
+  };
+  // Tabela por colaborador
+  if (P.tabColab) {
+    titulo('VALOR A RECEBER POR COLABORADOR');
+    const cols = [{ h: 'COLABORADOR', v: (c) => c.nome }];
+    if (P.colCategoria) cols.push({ h: 'CATEGORIA', v: (c) => c.categoria });
+    if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: { halign: 'right' } });
+    cols.push({ h: 'VALOR', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { halign: 'right', fontStyle: 'bold' } });
+    const iAss = cols.length;
+    if (P.colAssinatura) cols.push({ h: 'ASSINATURA', v: () => '', st: { cellWidth: 140 } });
+    tabela(cols, r.colaboradores, r, P.colAssinatura ? { didDrawCell: (d) => { if (d.section === 'body' && d.column.index === iAss) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6); } } } : {});
+  }
+  // Tabela dia a dia
+  if (P.tabDias) {
+    titulo('DIA A DIA');
+    const dir = { halign: 'right' }, cols = [{ h: 'DATA', v: (d) => `${dataBR(d.data)} (${diaSem(d.data)})` }];
+    if (P.diaGerado) cols.push({ h: 'GERADO', v: (d) => brl(d.valorBruto), t: () => brl(r.totalBruto), st: dir });
+    if (P.diaRetido) cols.push({ h: 'RETIDO', v: (d) => brl(d.valorRetido), t: () => brl(r.totalRetido), st: dir });
+    if (P.diaDistribuido) cols.push({ h: 'DISTRIBUÍDO', v: (d) => brl(d.valorLiquido), t: () => brl(r.totalLiquido), st: dir });
+    if (P.diaPessoas) cols.push({ h: 'PESSOAS', v: (d) => String(d.pessoas), st: dir });
+    tabela(cols, r.dias, r);
+  }
+  // Texto livre
+  if (P.rodape.trim()) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...TINTA);
+    const linhas = doc.splitTextToSize(P.rodape.trim(), W - 80);
+    if (y + linhas.length * 14 > H - 50) { doc.addPage(); y = 50; }
+    doc.text(linhas, 40, y);
+  }
+  const n = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= n; i++) {
+    doc.setPage(i); doc.setFontSize(8); doc.setTextColor(...SEC); doc.setFont('helvetica', 'normal');
+    if (P.geradoEm) doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}  ·  página ${i} de ${n}`, 40, H - 24);
+  }
+  return doc;
+}
 $('#rel-pdf').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
-  try {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
-  } catch { return toast('Não consegui preparar o PDF. Tente de novo.', true); }
-  const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), W = doc.internal.pageSize.getWidth();
-  const TERRA = [36, 30, 25], FERR = [169, 68, 44], DOUR = [230, 164, 61], CREME = [255, 245, 229], TINTA = [56, 33, 24], SEC = [95, 73, 55];
-  doc.setFillColor(...TERRA); doc.rect(0, 0, W, 92, 'F'); doc.setFillColor(...FERR); doc.rect(0, 0, W, 6, 'F');
-  try { doc.addImage(SOL, 'PNG', 40, 24, 46, 46); } catch {}
-  doc.setTextColor(...DOUR); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text('SALTO DAS NUVENS  ·  TAXA DE ATENDIMENTO', 100, 40);
-  doc.setTextColor(...CREME); doc.setFontSize(22); doc.text('REPASSE DA SEMANA', 100, 64);
-  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.text(`${dataBR(r.de)} a ${dataBR(r.ate)}`, W - 40, 64, { align: 'right' });
-  const kp = [['TOTAL GERADO', brl(r.totalBruto)], ['RETIDO P/ ENCARGOS', brl(r.totalRetido)], ['TOTAL A PAGAR', brl(r.totalLiquido)]];
-  const bw = (W - 80 - 24) / 3;
-  kp.forEach(([k, v], i) => {
-    const x = 40 + i * (bw + 12), y = 112;
-    doc.setFillColor(211, 152, 73); doc.rect(x + 4, y + 4, bw, 52, 'F');
-    doc.setFillColor(...(i === 2 ? FERR : CREME)); doc.setDrawColor(...FERR); doc.setLineWidth(1.5); doc.rect(x, y, bw, 52, 'FD');
-    doc.setTextColor(...(i === 2 ? CREME : SEC)); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text(k, x + 12, y + 18);
-    doc.setTextColor(...(i === 2 ? CREME : TINTA)); doc.setFontSize(16); doc.text(v, x + 12, y + 40);
-  });
-  const est = { headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { textColor: TINTA, fontSize: 10 }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' }, margin: { left: 40, right: 40 } };
-  doc.setTextColor(...FERR); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text('VALOR A RECEBER POR COLABORADOR', 40, 196);
-  doc.autoTable({ ...est, startY: 206, head: [['COLABORADOR', 'CATEGORIA', 'DIAS', 'VALOR', 'ASSINATURA']],
-    body: r.colaboradores.map((c) => [c.nome, c.categoria, String(c.dias), brl(c.valor), '']), foot: [['TOTAL', '', '', brl(r.totalLiquido), '']],
-    columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right', fontStyle: 'bold' }, 4: { cellWidth: 140 } },
-    didDrawCell: (d) => { if (d.section === 'body' && d.column.index === 4) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6); } } });
-  let y = doc.lastAutoTable.finalY + 28;
-  if (y > doc.internal.pageSize.getHeight() - 120) { doc.addPage(); y = 50; }
-  doc.setTextColor(...FERR); doc.setFontSize(13); doc.text('DIA A DIA', 40, y);
-  doc.autoTable({ ...est, startY: y + 10, head: [['DATA', 'GERADO', 'RETIDO', 'DISTRIBUÍDO', 'PESSOAS']],
-    body: r.dias.map((d) => [`${dataBR(d.data)} (${diaSem(d.data)})`, brl(d.valorBruto), brl(d.valorRetido), brl(d.valorLiquido), String(d.pessoas)]),
-    foot: [['TOTAL', brl(r.totalBruto), brl(r.totalRetido), brl(r.totalLiquido), '']], columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } });
-  const n = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(...SEC); doc.setFont('helvetica', 'normal'); doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}  ·  página ${i} de ${n}`, 40, doc.internal.pageSize.getHeight() - 24); }
-  await salvarArquivo(`repasse-taxa-${r.de}-a-${r.ate}.pdf`, doc.output('arraybuffer'));
+  let doc; try { doc = await gerarPDF(r, cfg().pdf); } catch { return toast('Não consegui preparar o PDF. Tente de novo.', true); }
+  salvarArquivo(`repasse-taxa-${r.de}-a-${r.ate}.pdf`, doc.output('arraybuffer'));
 });
+$('#rel-ajustar').addEventListener('click', () => { irPara('config'); setTimeout(() => $('#c-pdf').scrollIntoView({ behavior: 'smooth', block: 'start' }), 60); });
 
 /* ============================================================
    EQUIPE
@@ -1261,12 +1446,72 @@ $('#form-eq').addEventListener('submit', async (e) => {
    ============================================================ */
 let C;
 function carregarConfigForm() {
-  C = JSON.parse(JSON.stringify(cfg()));
-  $('#c-ret').value = C.retencaoPct; $$('input[name=modo]').forEach((r) => (r.checked = r.value === C.modoDivisao));
-  $('#c-senha').value = $('#c-senha2').value = ''; exemploRet(); renderCats();
+  C = normCfg(cfg());
+  $$('input[name=modo]').forEach((r) => (r.checked = r.value === C.modoDivisao));
+  $('#c-senha').value = $('#c-senha2').value = '';
+  renderRets(); renderCats(); renderPdfForm(); marcarSujo(false);
 }
-function exemploRet() { const p = Number($('#c-ret').value) || 0; $('#c-exemplo').textContent = `Com ${String(p).replace('.', ',')}%, de ${brl(1000)} ficam ${brl(10 * p)} retidos e ${brl(1000 - 10 * p)} vão para a equipe.`; }
-$('#c-ret').addEventListener('input', exemploRet);
+function marcarSujo(v = true) { sujo = v; $('#c-sujo').hidden = !v; }
+// qualquer mudança nos campos de Configurações (menos o arquivo de cópia) marca alterações não salvas
+['input', 'change'].forEach((ev) => $('#tela-config').addEventListener(ev, (e) => { if (e.target.id !== 'c-arq-backup') marcarSujo(); }));
+addEventListener('beforeunload', (e) => { if (sujo && abaAtual === 'config') { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- Retenções ---------- */
+function renderRets() {
+  $('#c-rets').innerHTML = C.retencoes.length ? C.retencoes.map((r, i) => `<tr><td><input value="${esc(r.nome)}" data-rn="${i}" aria-label="Nome da retenção"></td>
+    <td class="num"><span class="pctin"><input type="number" min="0" max="100" step="0.01" value="${r.pct}" data-rp="${i}" aria-label="Porcentagem de ${esc(r.nome)}"> %</span></td>
+    <td class="acoes"><button class="btn mini perigo" data-rr="${i}" type="button">Remover</button></td></tr>`).join('')
+    : '<tr><td colspan="3" class="muted">Nenhuma retenção. Todo o valor do dia vai para a equipe.</td></tr>';
+  $$('[data-rn]').forEach((i) => i.addEventListener('input', () => { C.retencoes[i.dataset.rn].nome = i.value; exemploRet(); }));
+  $$('[data-rp]').forEach((i) => i.addEventListener('input', () => { C.retencoes[i.dataset.rp].pct = Number(i.value) || 0; exemploRet(); }));
+  $$('[data-rr]').forEach((b) => b.addEventListener('click', () => { C.retencoes.splice(b.dataset.rr, 1); marcarSujo(); renderRets(); }));
+  exemploRet();
+}
+function exemploRet() {
+  const tot = Math.round(C.retencoes.reduce((a, r) => a + (Number(r.pct) || 0), 0) * 100) / 100, ok = tot <= 100;
+  $('#c-ret-soma').textContent = pctBR(tot) + '%'; $('#c-ret-soma').style.color = ok ? 'var(--ok)' : 'var(--perigo)';
+  $('#c-ret-aviso').hidden = ok; $('#c-ret-aviso').textContent = `As retenções somam ${pctBR(tot)}%. O máximo é 100%.`;
+  const ex = Calc.calcular({ valorBruto: 1000, retencoes: C.retencoes, colaboradores: [], modo: 'igual', categorias: [] });
+  const partes = ex.retencoes.filter((r) => r.pct > 0).map((r) => `${brl(r.valor)} para ${String(r.nome).trim().toLowerCase() || 'retenção'}`);
+  $('#c-exemplo').textContent = `Exemplo: de ${brl(1000)}, ${partes.length ? `ficam ${partes.join(', ')} e ` : ''}${brl(ex.valorLiquido)} vão para a equipe.`;
+}
+$('#form-ret').addEventListener('submit', (e) => {
+  e.preventDefault(); const n = $('#c-nova-ret').value.trim(); if (!n) return;
+  if (C.retencoes.some((r) => norm(r.nome) === norm(n))) return toast('Essa retenção já existe.', true);
+  C.retencoes.push({ id: 'ret-' + novoId(), nome: n, pct: 0 }); $('#c-nova-ret').value = ''; marcarSujo(); renderRets();
+  toast(`${n} adicionada. Defina a % e toque em Salvar configurações.`);
+  setTimeout(() => { const ins = $$('[data-rp]'); ins[ins.length - 1]?.focus(); }, 30);
+});
+
+/* ---------- PDF ---------- */
+function renderPdfForm() {
+  $$('[data-pdf]').forEach((el) => { const v = C.pdf[el.dataset.pdf]; if (el.type === 'checkbox') el.checked = !!v; else el.value = v ?? ''; });
+  travarSubopcoes();
+}
+function travarSubopcoes() { $$('[data-pai]').forEach((el) => (el.disabled = !C.pdf[el.dataset.pai])); }
+$$('[data-pdf]').forEach((el) => el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', () => {
+  C.pdf[el.dataset.pdf] = el.type === 'checkbox' ? el.checked : el.value; travarSubopcoes();
+}));
+function relatorioExemplo() {
+  const rg = { retencoes: C.retencoes, modo: 'igual', categorias: C.categorias };
+  const cat = (C.categorias[0] || {}).id;
+  const dia = (data, v, nomes) => {
+    const c = Calc.calcular({ valorBruto: v, ...rg, colaboradores: nomes.map((n) => ({ nome: n, categoriaId: cat })) });
+    return { data, valorBruto: c.valorBruto, retencoes: c.retencoes, valorRetido: c.valorRetido, valorLiquido: c.valorLiquido, colaboradores: c.itens };
+  };
+  const [de, ate] = semana(0);
+  const lista = [dia(de, 1250, ['Exemplo Ana', 'Exemplo Bruno', 'Exemplo Carla']), dia(ate, 980.4, ['Exemplo Ana', 'Exemplo Bruno'])];
+  return { de, ate, qtd: lista.length, ...Calc.relatorio(lista) };
+}
+$('#c-pdf-previa').addEventListener('click', async () => {
+  const real = dadosRel(), r = real.qtd ? real : relatorioExemplo();
+  let doc; try { doc = await gerarPDF(r, C.pdf); } catch { return toast('Não consegui preparar o PDF. Tente de novo.', true); }
+  const url = URL.createObjectURL(doc.output('blob'));
+  const w = window.open(url, '_blank');
+  if (!w) salvarArquivo('previa-relatorio.pdf', doc.output('arraybuffer'));
+  toast(real.qtd ? `Prévia com a semana de ${dataBR(real.de)} a ${dataBR(real.ate)}.` : 'Prévia com dados de exemplo (ainda não há lançamentos na semana).');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+});
 $$('input[name=modo]').forEach((r) => r.addEventListener('change', () => { C.modoDivisao = r.value; somaCats(); }));
 function renderCats() {
   if (!C) return;
@@ -1279,7 +1524,7 @@ function renderCats() {
     const c = C.categorias[b.dataset.cr], usados = D.equipe.filter((m) => m.categoriaId === c.id).length;
     const destino = C.categorias.find((x) => x.id !== c.id);
     if (usados && !(await confirmar('Remover categoria?', `${usados} ${usados > 1 ? 'pessoas da equipe estão' : 'pessoa da equipe está'} em <b>${esc(c.nome)}</b> e ${usados > 1 ? 'vão' : 'vai'} para <b>${esc(destino.nome)}</b> quando você salvar.`, 'Remover'))) return;
-    C.categorias.splice(b.dataset.cr, 1); renderCats();
+    C.categorias.splice(b.dataset.cr, 1); marcarSujo(); renderCats();
   }));
   somaCats();
 }
@@ -1292,17 +1537,20 @@ function somaCats() {
 $('#form-cat').addEventListener('submit', (e) => {
   e.preventDefault(); const n = $('#c-nova').value.trim(); if (!n) return;
   if (C.categorias.some((c) => norm(c.nome) === norm(n))) return toast('Essa categoria já existe.', true);
-  C.categorias.push({ id: 'cat-' + novoId(), nome: n, pct: 0 }); $('#c-nova').value = ''; renderCats();
+  C.categorias.push({ id: 'cat-' + novoId(), nome: n, pct: 0 }); $('#c-nova').value = ''; marcarSujo(); renderCats();
+  toast(`Categoria ${n} adicionada. Toque em Salvar configurações para guardar.`);
 });
 $('#c-salvar').addEventListener('click', async () => {
-  const ret = Number($('#c-ret').value);
-  if ($('#c-ret').value === '' || isNaN(ret) || ret < 0 || ret > 100) return toast('A retenção precisa ficar entre 0 e 100%.', true);
+  if (C.retencoes.some((r) => !String(r.nome).trim())) return toast('Dê um nome para cada retenção.', true);
+  if (C.retencoes.some((r) => r.pct < 0 || r.pct > 100)) return toast('Cada retenção precisa ficar entre 0 e 100%.', true);
+  const tr = C.retencoes.reduce((a, r) => a + (Number(r.pct) || 0), 0);
+  if (tr > 100.0001) return toast(`As retenções somam ${pctBR(tr)}%. O máximo é 100%.`, true);
   if (C.categorias.some((c) => !c.nome.trim())) return toast('Dê um nome para cada categoria.', true);
   const s = C.categorias.reduce((a, c) => a + Number(c.pct || 0), 0);
   if (C.modoDivisao === 'categoria' && Math.abs(s - 100) > 0.001) return toast('Para dividir por categoria, as porcentagens precisam somar 100%.', true);
   const s1 = $('#c-senha').value, s2 = $('#c-senha2').value;
   if (s1 || s2) { if (s1 !== s2) return toast('As duas senhas não são iguais.', true); if (s1.length < 6) return toast('Use uma senha com pelo menos 6 letras ou números.', true); }
-  const novo = { retencaoPct: ret, modoDivisao: C.modoDivisao, categorias: C.categorias.map((c) => ({ id: c.id, nome: c.nome.trim(), pct: Number(c.pct) || 0 })) };
+  const novo = cfgParaGravar(C);
   if (!(await salvarCfg(novo))) return;
   if (s1) {
     try { await fb.au.updatePassword(fb.auth.currentUser, s1); }
@@ -1314,7 +1562,7 @@ $('#c-salvar').addEventListener('click', async () => {
   const ids = novo.categorias.map((c) => c.id);
   for (const m of D.equipe) if (!ids.includes(m.categoriaId)) await salvarMembro({ ...m, categoriaId: ids[0] });
   F.dia.forEach((d) => { if (!F.regras && !ids.includes(d.categoriaId)) d.categoriaId = ids[0]; });
-  toast(s1 ? 'Configurações e nova senha salvas.' : 'Configurações salvas.'); carregarConfigForm();
+  marcarSujo(false); toast(s1 ? 'Configurações e nova senha salvas.' : 'Configurações salvas.'); carregarConfigForm();
 });
 $('#c-backup').addEventListener('click', () => salvarArquivo(`backup-repasse-salto-${hoje()}.json`, JSON.stringify({ exportadoEm: new Date().toISOString(), configuracoes: cfg(), equipe: D.equipe, lancamentos: D.lanc }, null, 2)));
 $('#c-restaurar').addEventListener('click', () => $('#c-arq-backup').click());
@@ -1326,7 +1574,7 @@ $('#c-arq-backup').addEventListener('change', async () => {
   if (!(await confirmar('Restaurar esta cópia?', `Vão entrar <b>${lancs.length}</b> lançamentos e <b>${equipe.length}</b> pessoas da equipe. Dias com o mesmo registro são substituídos; o resto continua.`, 'Restaurar'))) return;
   const { writeBatch } = fb.fs; const itens = [];
   const c = d.configuracoes;
-  itens.push([ref('config', 'geral'), limpo({ retencaoPct: Number(c.retencaoPct ?? 20), modoDivisao: c.modoDivisao === 'categoria' ? 'categoria' : 'igual', categorias: c.categorias || CFG_PADRAO.categorias })]);
+  itens.push([ref('config', 'geral'), limpo(cfgParaGravar(normCfg(c)))]);
   equipe.forEach((m) => m && m.nome && itens.push([ref('equipe', m.id || novoId()), { nome: m.nome, categoriaId: m.categoriaId || 'comum' }]));
   lancs.forEach((l) => l && l.data && itens.push([ref('lancamentos', l.id || novoId()), limpo({ ...l, id: undefined })]));
   const ok = await gravar(async () => { for (let i = 0; i < itens.length; i += 400) { const b = writeBatch(fb.db); itens.slice(i, i + 400).forEach(([r, v]) => b.set(r, v)); await b.commit(); } });
