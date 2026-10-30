@@ -295,6 +295,7 @@ textarea { resize: vertical; line-height: 1.45; font-size: 14.5px; min-height: 1
 .chk:has(input:disabled) { opacity: .45; cursor: default; }
 .sujo { align-self: center; margin-right: auto; font-weight: 800; font-size: 13px; color: var(--ferrugem-txt); }
 .sujo::before { content: "● "; color: var(--dourado); }
+#c-cats-ajuda { margin-top: 12px; }
 .ret-detalhe { margin: 8px 0; font-size: 13.5px; color: var(--secundario); }
 .ajuda { font-size: 13.5px; color: var(--secundario); margin: 0; }
 
@@ -680,15 +681,16 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           <h2>Forma de divisão</h2>
           <label class="opcao" for="m-igual"><input type="radio" name="modo" id="m-igual" value="igual"><span><b>Igual para todos</b><small>O valor a distribuir é dividido em partes iguais entre quem trabalhou no dia.</small></span></label>
           <label class="opcao" for="m-cat"><input type="radio" name="modo" id="m-cat" value="categoria"><span><b>Porcentagem por categoria</b><small>Cada categoria fica com a sua porcentagem, dividida igualmente entre as pessoas dela no dia. Se uma categoria não teve ninguém, a parte dela vai para as outras, na mesma proporção.</small></span></label>
+          <label class="opcao" for="m-peso"><input type="radio" name="modo" id="m-peso" value="peso"><span><b>Peso por categoria</b><small>Cada categoria tem um peso (ex.: Colaborador 1, Colaborador + Limpeza 1,2). O valor é dividido pela soma dos pesos de quem trabalhou: quem tem peso 1,2 recebe sempre 20% a mais que quem tem peso 1, não importa quantas pessoas trabalharam no dia.</small></span></label>
         </div>
 
         <div class="painel listrado largo">
           <h2>Categorias</h2>
           <div class="rolagem">
             <table class="cats">
-              <thead><tr><th class="col-nome">Categoria</th><th class="num">% do valor a distribuir</th><th></th></tr></thead>
+              <thead><tr><th class="col-nome">Categoria</th><th class="num" id="c-cats-th">% do valor a distribuir</th><th></th></tr></thead>
               <tbody id="c-cats"></tbody>
-              <tfoot><tr class="total"><td>Total</td><td class="num"><span id="c-soma" class="soma">100%</span></td><td></td></tr></tfoot>
+              <tfoot id="c-cats-pe"><tr class="total"><td>Total</td><td class="num"><span id="c-soma" class="soma">100%</span></td><td></td></tr></tfoot>
             </table>
           </div>
           <form id="form-cat" class="add-col add-um">
@@ -696,6 +698,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
             <input id="c-nova" placeholder="Nova categoria (ex.: Bar, Caixa, Guarita)" autocomplete="off">
             <button class="btn" type="submit">Adicionar categoria</button>
           </form>
+          <p id="c-cats-ajuda" class="ajuda"></p>
           <p id="c-aviso" class="aviso" hidden></p>
         </div>
 
@@ -816,11 +819,13 @@ const Calc = (() => {
     let ret = 0;
     const rv = rs.map((r) => { let v = Math.round(bruto * r.pct / 100); if (ret + v > bruto) v = bruto - ret; ret += v; return { ...r, valor: fromC(v) }; });
     const liq = bruto - ret;
-    modo = modo === 'categoria' ? 'categoria' : 'igual';
+    modo = modo === 'categoria' || modo === 'peso' ? modo : 'igual';
     let pesos;
     if (modo === 'categoria') {
       const q = {}; colaboradores.forEach((c) => (q[c.categoriaId] = (q[c.categoriaId] || 0) + 1));
       pesos = colaboradores.map((c) => { const k = categorias.find((x) => x.id === c.categoriaId); return (k ? Number(k.pct) || 0 : 0) / q[c.categoriaId]; });
+    } else if (modo === 'peso') {
+      pesos = colaboradores.map((c) => { const k = categorias.find((x) => x.id === c.categoriaId); const p = k ? Number(k.peso ?? 1) : 1; return p > 0 ? p : 0; });
     } else pesos = colaboradores.map(() => 1);
     const v = distribuir(liq, pesos);
     return {
@@ -932,17 +937,19 @@ function normCfg(raw) {
   if (!Array.isArray(raw.retencoes)) c.retencoes = [{ id: 'encargos', nome: 'Encargos trabalhistas', pct: Number(raw.retencaoPct ?? 20) || 0 }, { ...RET_BONIFICACAO }];
   c.pdf = { ...PDF_PADRAO, ...(raw.pdf || {}) };
   if (!Array.isArray(c.categorias) || !c.categorias.length) c.categorias = JSON.parse(JSON.stringify(CFG_PADRAO.categorias));
+  c.categorias.forEach((k) => { k.peso = pesoDe(k); });
   return c;
 }
 function cfgParaGravar(c) {
   const retencoes = c.retencoes.map((r) => ({ id: r.id, nome: String(r.nome).trim(), pct: Number(r.pct) || 0 }));
   return {
-    modoDivisao: c.modoDivisao === 'categoria' ? 'categoria' : 'igual',
-    categorias: c.categorias.map((k) => ({ id: k.id, nome: String(k.nome).trim(), pct: Number(k.pct) || 0 })),
+    modoDivisao: ['categoria', 'peso'].includes(c.modoDivisao) ? c.modoDivisao : 'igual',
+    categorias: c.categorias.map((k) => ({ id: k.id, nome: String(k.nome).trim(), pct: Number(k.pct) || 0, peso: pesoDe(k) })),
     retencoes, retencaoPct: Math.round(retencoes.reduce((a, r) => a + r.pct, 0) * 100) / 100,
     pdf: { ...PDF_PADRAO, ...(c.pdf || {}) },
   };
 }
+const pesoDe = (k) => { const p = Number(k && k.peso); return Number.isFinite(p) && p > 0 ? p : 1; };
 const pctBR = (n) => String(Math.round((Number(n) || 0) * 100) / 100).replace('.', ',');
 const D = { cfg: normCfg(), equipe: [], lanc: [], pronto: false };
 const cfg = () => D.cfg;
@@ -1132,7 +1139,9 @@ function atualizarResumo() {
     ? rets.map((x) => `<div class="ret"><dt>${esc(x.nome)} · ${pctBR(x.pct)}%</dt><dd>− ${brl(x.valor)}</dd></div>`).join('')
     : '<div class="ret"><dt>Sem retenção</dt><dd>R$ 0,00</dd></div>';
   $('#r-qtd').textContent = String(F.dia.length);
-  $('#r-regra').textContent = r.modo === 'categoria'
+  $('#r-regra').textContent = r.modo === 'peso'
+    ? 'Por peso: ' + regras().categorias.map((c) => `${c.nome} ${pctBR(pesoDe(c))}`).join(' · ')
+    : r.modo === 'categoria'
     ? 'Por categoria: ' + regras().categorias.map((c) => `${c.nome} ${String(c.pct).replace('.', ',')}%`).join(' · ')
     : n ? `Partes iguais entre ${n} ${n > 1 ? 'pessoas' : 'pessoa'}.` : 'Partes iguais entre quem trabalhou.';
   $('#r-itens').innerHTML = r.itens.length
@@ -1156,7 +1165,7 @@ $('#salvar').addEventListener('click', async () => {
   const editando = !!F.editId;
   const l = {
     id: F.editId || novoId(), data, valorBruto: r.valorBruto, retencoes: r.retencoes, retencaoPct: r.retencaoPct, valorRetido: r.valorRetido, valorLiquido: r.valorLiquido,
-    modo: r.modo, categorias: rg.categorias.map((c) => ({ id: c.id, nome: c.nome, pct: Number(c.pct) || 0 })), colaboradores: r.itens,
+    modo: r.modo, categorias: rg.categorias.map((c) => ({ id: c.id, nome: c.nome, pct: Number(c.pct) || 0, peso: pesoDe(c) })), colaboradores: r.itens,
     origem: F.origem, arquivo: F.origem === 'relatorio' ? F.arquivo || null : null, obs: $('#l-obs').value.trim(),
     criadoEm: editando ? (D.lanc.find((x) => x.id === F.editId) || {}).criadoEm || new Date().toISOString() : new Date().toISOString(), atualizadoEm: new Date().toISOString(),
   };
@@ -1255,7 +1264,7 @@ function renderSalvos() {
       <td class="num c-retido" data-label="Retido">${brl(l.valorRetido)} <small class="muted">${pctBR(l.retencaoPct)}%</small></td>
       <td class="num c-dist" data-label="Distribuído"><span class="valor">${brl(l.valorLiquido)}</span></td>
       <td class="num c-pessoas" data-label="Pessoas">${l.colaboradores.length}</td>
-      <td class="c-tags"><span class="tag">${l.modo === 'categoria' ? 'Por categoria' : 'Igual'}</span>${l.origem === 'relatorio' ? ' <span class="tag" title="' + esc(l.arquivo || '') + '">Relatório</span>' : ''}</td>
+      <td class="c-tags"><span class="tag">${l.modo === 'categoria' ? 'Por categoria' : l.modo === 'peso' ? 'Por peso' : 'Igual'}</span>${l.origem === 'relatorio' ? ' <span class="tag" title="' + esc(l.arquivo || '') + '">Relatório</span>' : ''}</td>
       <td class="acoes c-acoes"><button class="btn mini" data-ed="${esc(l.id)}">Editar</button><button class="btn mini perigo" data-ex="${esc(l.id)}">Excluir</button></td>
     </tr>${aberto === l.id ? `<tr class="detalhe"><td colspan="7">${retTexto(Calc.retDe(l))}${l.obs ? `<p class="muted" style="margin:8px 0">Obs.: ${esc(l.obs)}</p>` : ''}
       <table><thead><tr><th>Colaborador</th><th>Categoria</th><th class="num">Recebeu</th></tr></thead><tbody>
@@ -1519,14 +1528,23 @@ $('#c-pdf-previa').addEventListener('click', async () => {
   toast(real.qtd ? `Prévia com a semana de ${dataBR(real.de)} a ${dataBR(real.ate)}.` : 'Prévia com dados de exemplo (ainda não há lançamentos na semana).');
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 });
-$$('input[name=modo]').forEach((r) => r.addEventListener('change', () => { C.modoDivisao = r.value; somaCats(); }));
+$$('input[name=modo]').forEach((r) => r.addEventListener('change', () => { C.modoDivisao = r.value; renderCats(); }));
 function renderCats() {
   if (!C) return;
+  const m = C.modoDivisao;
+  $('#c-cats-th').textContent = m === 'peso' ? 'Peso' : m === 'categoria' ? '% do valor a distribuir' : '';
+  $('#c-cats-pe').hidden = m !== 'categoria';
   $('#c-cats').innerHTML = C.categorias.map((c, i) => `<tr><td><input value="${esc(c.nome)}" data-cn="${i}" aria-label="Nome da categoria"></td>
-    <td class="num"><span class="pctin"><input type="number" min="0" max="100" step="0.01" value="${c.pct}" data-cp="${i}" aria-label="Porcentagem de ${esc(c.nome)}"> %</span></td>
+    <td class="num">${m === 'peso'
+      ? `<span class="pctin"><input type="number" min="0.1" step="0.1" value="${pesoDe(c)}" data-cw="${i}" aria-label="Peso de ${esc(c.nome)}"> ×</span>`
+      : m === 'categoria'
+      ? `<span class="pctin"><input type="number" min="0" max="100" step="0.01" value="${c.pct}" data-cp="${i}" aria-label="Porcentagem de ${esc(c.nome)}"> %</span>`
+      : ''}</td>
     <td class="acoes"><button class="btn mini perigo" data-cr="${i}"${C.categorias.length < 2 ? ' disabled' : ''}>Remover</button></td></tr>`).join('');
   $$('[data-cn]').forEach((i) => i.addEventListener('input', () => (C.categorias[i.dataset.cn].nome = i.value)));
   $$('[data-cp]').forEach((i) => i.addEventListener('input', () => { C.categorias[i.dataset.cp].pct = Number(i.value) || 0; somaCats(); }));
+  $$('[data-cw]').forEach((i) => i.addEventListener('input', () => { C.categorias[i.dataset.cw].peso = Number(String(i.value).replace(',', '.')) || 0; somaCats(); }));
+  $$('[data-cn]').forEach((i) => i.addEventListener('change', somaCats));
   $$('[data-cr]').forEach((b) => b.addEventListener('click', async () => {
     const c = C.categorias[b.dataset.cr], usados = D.equipe.filter((m) => m.categoriaId === c.id).length;
     const destino = C.categorias.find((x) => x.id !== c.id);
@@ -1538,13 +1556,22 @@ function renderCats() {
 function somaCats() {
   const s = Math.round(C.categorias.reduce((a, c) => a + Number(c.pct || 0), 0) * 100) / 100, ok = Math.abs(s - 100) < 0.001;
   $('#c-soma').textContent = String(s).replace('.', ',') + '%'; $('#c-soma').style.color = ok ? 'var(--ok)' : 'var(--perigo)';
-  $('#c-aviso').hidden = ok || C.modoDivisao !== 'categoria';
-  $('#c-aviso').textContent = `Para dividir por categoria, a soma precisa dar 100%. Hoje está em ${String(s).replace('.', ',')}%.`;
+  const m = C.modoDivisao, pesoRuim = C.categorias.some((k) => !(Number(k.peso) > 0));
+  $('#c-aviso').hidden = m === 'categoria' ? ok : m === 'peso' ? !pesoRuim : true;
+  $('#c-aviso').textContent = m === 'peso' ? 'Cada categoria precisa de um peso maior que zero.' : `Para dividir por categoria, a soma precisa dar 100%. Hoje está em ${String(s).replace('.', ',')}%.`;
+  const aj = $('#c-cats-ajuda');
+  if (m === 'igual') aj.textContent = 'Na divisão igual para todos, a categoria serve só para identificar cada pessoa.';
+  else if (m === 'categoria') aj.textContent = 'Cada categoria recebe a sua porcentagem, dividida entre as pessoas dela no dia.';
+  else if (pesoRuim || !C.categorias.length) aj.textContent = '';
+  else {
+    const ex = Calc.calcular({ valorBruto: 1000, retencoes: [], modo: 'peso', categorias: C.categorias, colaboradores: C.categorias.map((k) => ({ nome: k.nome, categoriaId: k.id })) });
+    aj.textContent = `Exemplo com ${brl(1000)} a distribuir e uma pessoa de cada categoria: ` + ex.itens.map((it) => `${it.nome || 'categoria'} ${brl(it.valor)}`).join(' · ') + '.';
+  }
 }
 $('#form-cat').addEventListener('submit', (e) => {
   e.preventDefault(); const n = $('#c-nova').value.trim(); if (!n) return;
   if (C.categorias.some((c) => norm(c.nome) === norm(n))) return toast('Essa categoria já existe.', true);
-  C.categorias.push({ id: 'cat-' + novoId(), nome: n, pct: 0 }); $('#c-nova').value = ''; marcarSujo(); renderCats();
+  C.categorias.push({ id: 'cat-' + novoId(), nome: n, pct: 0, peso: 1 }); $('#c-nova').value = ''; marcarSujo(); renderCats();
   toast(`Categoria ${n} adicionada. Toque em Salvar configurações para guardar.`);
 });
 $('#c-salvar').addEventListener('click', async () => {
@@ -1555,6 +1582,7 @@ $('#c-salvar').addEventListener('click', async () => {
   if (C.categorias.some((c) => !c.nome.trim())) return toast('Dê um nome para cada categoria.', true);
   const s = C.categorias.reduce((a, c) => a + Number(c.pct || 0), 0);
   if (C.modoDivisao === 'categoria' && Math.abs(s - 100) > 0.001) return toast('Para dividir por categoria, as porcentagens precisam somar 100%.', true);
+  if (C.modoDivisao === 'peso' && C.categorias.some((k) => !(Number(k.peso) > 0))) return toast('Cada categoria precisa de um peso maior que zero.', true);
   const s1 = $('#c-senha').value, s2 = $('#c-senha2').value;
   if (s1 || s2) { if (s1 !== s2) return toast('As duas senhas não são iguais.', true); if (s1.length < 6) return toast('Use uma senha com pelo menos 6 letras ou números.', true); }
   const novo = cfgParaGravar(C);
