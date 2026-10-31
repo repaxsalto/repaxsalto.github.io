@@ -236,7 +236,7 @@ td small.cpf { display: block; white-space: nowrap; font-size: 12px; color: var(
 .chip.on small { color: inherit; opacity: .8; }
 .chip:focus-visible { outline: 3px solid var(--dourado); }
 .lista-dia { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.lista-dia li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 130px) minmax(0, 130px) 44px; gap: 8px; align-items: center; padding: 4px 4px 4px 14px; background: var(--celula); border-left: 4px solid var(--dourado); }
+.lista-dia li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 120px) 44px; gap: 8px; align-items: center; padding: 4px 4px 4px 14px; background: var(--celula); border-left: 4px solid var(--dourado); }
 .lista-dia li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lista-dia .consumo { display: flex; align-items: center; background: var(--papel); border: 2px solid var(--tracejado); min-height: 40px; }
 .lista-dia .consumo span { font-size: 11px; font-weight: 800; color: var(--secundario); padding-left: 8px; white-space: nowrap; }
@@ -244,6 +244,16 @@ td small.cpf { display: block; white-space: nowrap; font-size: 12px; color: var(
 .lista-dia .consumo:focus-within { border-color: var(--ferrugem-borda); }
 td small.desc { display: block; font-size: 12px; color: var(--secundario); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pendente { color: var(--perigo); }
+.resumo .tag.cat { white-space: normal; text-align: left; }
+.cats-dia { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.cats-dia > select { flex: 1 1 120px; min-width: 0; }
+.cats-dia .extra { display: flex; align-items: center; gap: 4px; flex: 1 1 140px; min-width: 0; }
+.cats-dia .extra i { font-style: normal; font-weight: 800; color: var(--ferrugem-txt); }
+.cats-dia .extra select { flex: 1; min-width: 0; }
+.cats-dia .x.mini { width: 30px; height: 30px; min-height: 30px; flex: none; }
+.mais-cat { all: unset; cursor: pointer; font-size: 12px; font-weight: 800; color: var(--ferrugem-txt); border: 2px dashed var(--tracejado); padding: 6px 8px; white-space: nowrap; }
+.mais-cat:hover { border-color: var(--ferrugem-borda); }
+.mais-cat:focus-visible { outline: 3px solid var(--dourado); }
 .lista-dia select { min-height: 40px; padding: 6px 8px; font-size: 14px; background: var(--papel); }
 .x { all: unset; cursor: pointer; width: 44px; height: 40px; display: grid; place-items: center; font-size: 22px; color: var(--perigo); }
 .x:hover { background: var(--papel); }
@@ -493,7 +503,8 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   .barra-salvar .sujo { flex: 1.2; }
 }
 @media (max-width: 420px) {
-  .lista-dia li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; padding-left: 10px; }
+  .lista-dia li { grid-template-columns: minmax(0, 1fr) 40px; padding-left: 10px; }
+  .lista-dia .cats-dia { grid-column: 1 / -1; }
   .lista-dia li b { grid-column: 1 / -1; padding-top: 6px; }
   .x { width: 40px; }
   .barra-salvar.lanc #limpar { width: 64px; }
@@ -726,6 +737,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
             <div class="dist"><dt>A distribuir</dt><dd id="mm-r-liq">R$ 0,00</dd></div>
             <div class="qtd"><dt>Colaboradores selecionados</dt><dd id="mm-r-qtd">0</dd></div>
           </dl>
+          <p id="mm-r-regra" class="regra"></p>
           <div class="rolagem">
             <table>
               <thead><tr><th>Colaborador</th><th>Categoria</th><th class="num">Recebe</th></tr></thead>
@@ -1024,6 +1036,7 @@ const Calc = (() => {
     if (Array.isArray(l.retencoes)) return l.retencoes;
     return [{ id: 'encargos', nome: 'Encargos trabalhistas', pct: Number(l.retencaoPct) || 0, valor: Number(l.valorRetido) || 0 }];
   }
+  const catsDe = (c) => [...new Set([c.categoriaId, ...(Array.isArray(c.extras) ? c.extras : [])].filter(Boolean))];
   function calcular({ valorBruto, retencoes, retencaoPct, colaboradores, modo, categorias }) {
     const bruto = toC(valorBruto);
     const rs = (Array.isArray(retencoes) ? retencoes : retPadrao(retencaoPct))
@@ -1032,18 +1045,19 @@ const Calc = (() => {
     const rv = rs.map((r) => { let v = Math.round(bruto * r.pct / 100); if (ret + v > bruto) v = bruto - ret; ret += v; return { ...r, valor: fromC(v) }; });
     const liq = bruto - ret;
     modo = modo === 'categoria' || modo === 'peso' ? modo : 'igual';
+    // cada pessoa pode ter mais de uma categoria no dia: soma o peso (ou a parte) de cada uma
     let pesos;
     if (modo === 'categoria') {
-      const q = {}; colaboradores.forEach((c) => (q[c.categoriaId] = (q[c.categoriaId] || 0) + 1));
-      pesos = colaboradores.map((c) => { const k = categorias.find((x) => x.id === c.categoriaId); return (k ? Number(k.pct) || 0 : 0) / q[c.categoriaId]; });
+      const q = {}; colaboradores.forEach((c) => catsDe(c).forEach((id) => (q[id] = (q[id] || 0) + 1)));
+      pesos = colaboradores.map((c) => catsDe(c).reduce((a, id) => { const k = categorias.find((x) => x.id === id); return a + (k ? Number(k.pct) || 0 : 0) / q[id]; }, 0));
     } else if (modo === 'peso') {
-      pesos = colaboradores.map((c) => { const k = categorias.find((x) => x.id === c.categoriaId); const p = k ? Number(k.peso ?? 1) : 1; return p > 0 ? p : 0; });
+      pesos = colaboradores.map((c) => catsDe(c).reduce((a, id) => { const k = categorias.find((x) => x.id === id); const p = k ? Number(k.peso ?? 1) : 1; return a + (p > 0 ? p : 0); }, 0));
     } else pesos = colaboradores.map(() => 1);
     const v = distribuir(liq, pesos);
     return {
       valorBruto: fromC(bruto), retencoes: rv, retencaoPct: Math.round(rs.reduce((a, r) => a + r.pct, 0) * 100) / 100,
       valorRetido: fromC(ret), valorLiquido: fromC(liq), modo,
-      itens: colaboradores.map((c, i) => ({ nome: c.nome, categoriaId: c.categoriaId, categoria: (categorias.find((x) => x.id === c.categoriaId) || {}).nome || '', valor: fromC(v[i]), consumo: fromC(toC(c.consumo)) })),
+      itens: colaboradores.map((c, i) => ({ nome: c.nome, categoriaId: c.categoriaId, extras: catsDe(c).slice(1), categoria: catsDe(c).map((id) => (categorias.find((x) => x.id === id) || {}).nome || '').filter(Boolean).join(' + '), valor: fromC(v[i]), consumo: fromC(toC(c.consumo)) })),
     };
   }
   function relatorio(lista) {
@@ -1057,7 +1071,7 @@ const Calc = (() => {
       x.colaboradores.forEach((c) => {
         const k = c.nome.trim().toLocaleLowerCase('pt-BR');
         p[k] = p[k] || { nome: c.nome.trim(), cats: new Set(), dias: 0, c: 0, cons: 0 };
-        p[k].dias++; p[k].c += toC(c.valor); p[k].cons += toC(c.consumo); if (c.categoria) p[k].cats.add(c.categoria);
+        p[k].dias++; p[k].c += toC(c.valor); p[k].cons += toC(c.consumo); if (c.categoria) String(c.categoria).split(' + ').forEach((n) => p[k].cats.add(n));
       });
     });
     return {
@@ -1070,7 +1084,7 @@ const Calc = (() => {
       colaboradores: Object.values(p).map((x) => { const desc = Math.min(x.cons, x.c); return { nome: x.nome, categoria: [...x.cats].join(', '), dias: x.dias, valor: fromC(x.c), consumo: fromC(x.cons), desconto: fromC(desc), pagar: fromC(x.c - desc), pendente: fromC(x.cons - desc) }; }).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR')),
     };
   }
-  return { calcular, relatorio, parseValor, retDe };
+  return { calcular, relatorio, parseValor, retDe, catsDe };
 })();
 
 /* ============================================================
@@ -1302,6 +1316,33 @@ function renderTudo() {
 const nomeCat = (id, cats = cfg().categorias) => (cats.find((c) => c.id === id) || {}).nome || '—';
 const opcoesCat = (sel, cats = cfg().categorias) => cats.map((c) => `<option value="${esc(c.id)}"${c.id === sel ? ' selected' : ''}>${esc(c.nome)}</option>`).join('');
 
+/* Lista de quem trabalhou (usada no lançamento do dia e no mensal).
+   Cada pessoa tem a categoria principal e pode somar outras naquele dia. */
+function listaEquipeDia(ul, lista, cats, { mudou, redesenhar, diarista }) {
+  ul.innerHTML = lista.map((c, i) => {
+    const extras = Array.isArray(c.extras) ? c.extras : [], usadas = Calc.catsDe(c), sobra = cats.some((k) => !usadas.includes(k.id));
+    return `<li><b>${esc(c.nome)}${diarista(c) ? '<span class="tag">Diarista</span>' : ''}</b>
+      <div class="cats-dia"><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select>${extras.map((id, j) => `<span class="extra"><i>+</i><select data-ex="${i}" data-j="${j}" aria-label="Categoria extra de ${esc(c.nome)}">${opcoesCat(id, cats)}</select><button class="x mini" data-exrm="${i}" data-j="${j}" aria-label="Tirar categoria extra de ${esc(c.nome)}">×</button></span>`).join('')}${sobra ? `<button class="mais-cat" data-add="${i}" type="button" title="Somar outra categoria neste dia" aria-label="Somar outra categoria para ${esc(c.nome)}">+ categoria</button>` : ''}</div>
+      <label class="consumo" title="Consumo do colaborador no dia, descontado da gorjeta dele"><span>R$</span><input data-cons="${i}" inputmode="decimal" placeholder="Consumo" value="${c.consumo ? num2(c.consumo) : ''}" aria-label="Consumo de ${esc(c.nome)}"></label><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`;
+  }).join('');
+  const q = (sel) => [...ul.querySelectorAll(sel)];
+  q('select[data-i]').forEach((s) => s.addEventListener('change', () => { const c = lista[s.dataset.i]; c.categoriaId = s.value; c.extras = (c.extras || []).filter((id) => id !== s.value); redesenhar(); }));
+  q('select[data-ex]').forEach((s) => s.addEventListener('change', () => { const c = lista[s.dataset.ex]; c.extras[s.dataset.j] = s.value; c.extras = Calc.catsDe(c).slice(1); redesenhar(); }));
+  q('[data-exrm]').forEach((b) => b.addEventListener('click', () => { lista[b.dataset.exrm].extras.splice(b.dataset.j, 1); redesenhar(); }));
+  q('[data-add]').forEach((b) => b.addEventListener('click', () => {
+    const c = lista[b.dataset.add], livre = cats.find((k) => !Calc.catsDe(c).includes(k.id));
+    if (!livre) return; c.extras = [...(c.extras || []), livre.id]; redesenhar();
+    const novos = ul.querySelectorAll(`select[data-ex="${b.dataset.add}"]`); if (novos.length) novos[novos.length - 1].focus();
+  }));
+  q('[data-cons]').forEach((i) => {
+    i.addEventListener('input', () => { lista[i.dataset.cons].consumo = Calc.parseValor(i.value); mudou(); });
+    i.addEventListener('blur', () => { const v = Calc.parseValor(i.value); i.value = v ? num2(v) : ''; });
+  });
+  q('[data-rm]').forEach((b) => b.addEventListener('click', () => { lista.splice(b.dataset.rm, 1); redesenhar(); }));
+}
+const temExtra = (lista) => lista.some((c) => c.extras && c.extras.length);
+const notaExtra = (modo, lista) => !temExtra(lista) ? '' : modo === 'igual' ? ' Na divisão em partes iguais, a categoria extra não muda o valor.' : modo === 'peso' ? ' Quem fez mais de uma categoria soma os pesos.' : ' Quem fez mais de uma categoria recebe a parte de cada uma.';
+
 /* ============================================================
    LANÇAMENTO DO DIA
    ============================================================ */
@@ -1356,13 +1397,7 @@ function renderDia() {
     if (i >= 0) F.dia.splice(i, 1); else F.dia.push({ nome: c.nome, categoriaId: c.categoriaId, tipo: tipoDe(c) });
     renderDia();
   }));
-  $('#lista-dia').innerHTML = F.dia.map((c, i) => `<li><b>${esc(c.nome)}${tipoDe(D.equipe.find((m) => norm(m.nome) === norm(c.nome)) || c) === 'diarista' ? '<span class="tag">Diarista</span>' : ''}</b><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select><label class="consumo" title="Consumo do colaborador no dia, descontado da gorjeta dele"><span>R$</span><input data-cons="${i}" inputmode="decimal" placeholder="Consumo" value="${c.consumo ? num2(c.consumo) : ''}" aria-label="Consumo de ${esc(c.nome)}"></label><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`).join('');
-  $$('#lista-dia select').forEach((s) => s.addEventListener('change', () => { F.dia[s.dataset.i].categoriaId = s.value; atualizarResumo(); }));
-  $$('#lista-dia [data-cons]').forEach((i) => {
-    i.addEventListener('input', () => { F.dia[i.dataset.cons].consumo = Calc.parseValor(i.value); atualizarResumo(); });
-    i.addEventListener('blur', () => { const v = Calc.parseValor(i.value); i.value = v ? num2(v) : ''; });
-  });
-  $$('#lista-dia [data-rm]').forEach((b) => b.addEventListener('click', () => { F.dia.splice(b.dataset.rm, 1); renderDia(); }));
+  listaEquipeDia($('#lista-dia'), F.dia, cats, { mudou: atualizarResumo, redesenhar: renderDia, diarista: (c) => tipoDe(D.equipe.find((m) => norm(m.nome) === norm(c.nome)) || c) === 'diarista' });
   $('#vazio-dia').hidden = F.dia.length > 0;
   atualizarResumo();
 }
@@ -1389,6 +1424,7 @@ function atualizarResumo() {
     : r.modo === 'categoria'
     ? 'Por categoria: ' + regras().categorias.map((c) => `${c.nome} ${String(c.pct).replace('.', ',')}%`).join(' · ')
     : n ? `Partes iguais entre ${n} ${n > 1 ? 'pessoas' : 'pessoa'}.` : 'Partes iguais entre quem trabalhou.';
+  if (temExtra(F.dia)) $('#r-regra').textContent = $('#r-regra').textContent.replace(/\.?$/, '.') + notaExtra(r.modo, F.dia);
   $('#r-itens').innerHTML = r.itens.length
     ? r.itens.map((it) => `<tr><td>${esc(it.nome)}</td><td><span class="tag cat">${esc(it.categoria)}</span></td><td class="num"><span class="valor">${brl(it.valor)}</span>${it.consumo > 0 ? `<small class="desc">consumo − ${brl(it.consumo)}</small>` : ''}</td></tr>`).join('')
     : '<tr><td colspan="3" class="muted">Adicione quem trabalhou para ver quanto cada um recebe.</td></tr>';
@@ -1426,7 +1462,7 @@ $('#salvar').addEventListener('click', async () => {
 function editar(id) {
   const l = D.lanc.find((x) => x.id === id); if (!l) return;
   irPara('lancamento');
-  F = { editId: l.id, regras: { retencoes: Calc.retDe(l), modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, consumo: Number(c.consumo) || 0 })) };
+  F = { editId: l.id, regras: { retencoes: Calc.retDe(l), modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, extras: Array.isArray(c.extras) ? c.extras.slice() : [], consumo: Number(c.consumo) || 0 })) };
   setOrigem('manual');
   $('#l-data').value = l.data; $('#l-valor').value = num2(l.valorBruto); $('#l-obs').value = l.obs || '';
   $('#faixa-edicao').hidden = false; $('#edicao-data').textContent = dataBR(l.data); $('#titulo-lanc').textContent = 'Editar lançamento'; $('#salvar').textContent = 'Salvar alterações';
@@ -1601,7 +1637,7 @@ $('#mm-prox').addEventListener('click', () => { irDiaM(M.atual + 1); $('#mm-trab
 $('#mm-repetir').addEventListener('click', () => {
   const d = diaM(), ant = M.dias.slice(0, M.atual).reverse().find((x) => x.equipe.length);
   if (!ant) return toast('Nenhum dia anterior com equipe marcada.', true);
-  d.equipe = ant.equipe.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, tipo: c.tipo }));
+  d.equipe = ant.equipe.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, extras: (c.extras || []).slice(), tipo: c.tipo }));
   mexeu(d); renderMensal(); toast(`Equipe de ${dataBR(ant.data)} copiada (${d.equipe.length}).`);
 });
 $$('[data-mtodos]').forEach((b) => b.addEventListener('click', () => {
@@ -1642,6 +1678,9 @@ function tiraM() {
 function resumoM() {
   const d = diaM(); if (!d) return;
   const r = calcM(d);
+  const rg = regrasM();
+  $('#mm-r-regra').textContent = (r.modo === 'peso' ? 'Por peso: ' + rg.categorias.map((c) => `${c.nome} ${pctBR(pesoDe(c))}`).join(' · ')
+    : r.modo === 'categoria' ? 'Por categoria: ' + rg.categorias.map((c) => `${c.nome} ${pctBR(c.pct)}%`).join(' · ') : 'Partes iguais entre quem trabalhou') + '.' + notaExtra(r.modo, d.equipe);
   $('#mm-r-bruto').textContent = brl(r.valorBruto); $('#mm-r-liq').textContent = brl(r.valorLiquido); $('#mm-r-qtd').textContent = String(d.equipe.length);
   const rets = r.retencoes.filter((x) => x.pct > 0);
   $('#mm-r-rets').innerHTML = rets.length ? rets.map((x) => `<div class="ret"><dt>${esc(x.nome)} · ${pctBR(x.pct)}%</dt><dd>− ${brl(x.valor)}</dd></div>`).join('') : '<div class="ret"><dt>Sem retenção</dt><dd>R$ 0,00</dd></div>';
@@ -1689,13 +1728,7 @@ function renderMensal() {
   $('#mm-repetir').hidden = !ant;
   if (ant) $('#mm-repetir').textContent = `Repetir a equipe de ${dataBR(ant.data).slice(0, 5)} (${ant.equipe.length})`;
 
-  $('#mm-lista').innerHTML = d.equipe.map((c, i) => `<li><b>${esc(c.nome)}${c.tipo === 'diarista' ? '<span class="tag">Diarista</span>' : ''}</b><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select><label class="consumo" title="Consumo do colaborador no dia, descontado da gorjeta dele"><span>R$</span><input data-cons="${i}" inputmode="decimal" placeholder="Consumo" value="${c.consumo ? num2(c.consumo) : ''}" aria-label="Consumo de ${esc(c.nome)}"></label><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`).join('');
-  $$('#mm-lista select').forEach((s) => s.addEventListener('change', () => { d.equipe[s.dataset.i].categoriaId = s.value; mexeu(d); resumoM(); }));
-  $$('#mm-lista [data-cons]').forEach((i) => {
-    i.addEventListener('input', () => { d.equipe[i.dataset.cons].consumo = Calc.parseValor(i.value); mexeu(d); resumoM(); });
-    i.addEventListener('blur', () => { const v = Calc.parseValor(i.value); i.value = v ? num2(v) : ''; tiraM(); });
-  });
-  $$('#mm-lista [data-rm]').forEach((b) => b.addEventListener('click', () => { d.equipe.splice(b.dataset.rm, 1); mexeu(d); renderMensal(); }));
+  listaEquipeDia($('#mm-lista'), d.equipe, cats, { mudou: () => { mexeu(d); resumoM(); }, redesenhar: () => { mexeu(d); renderMensal(); }, diarista: (c) => c.tipo === 'diarista' });
   $('#mm-vazio').hidden = d.equipe.length > 0;
   resumoM();
 }
