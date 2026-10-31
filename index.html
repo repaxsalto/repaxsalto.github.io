@@ -267,6 +267,29 @@ td small.desc { display: block; font-size: 12px; color: var(--secundario); font-
 .barra-salvar { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; margin-top: auto;
   padding-block: 22px calc(22px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to bottom, transparent, var(--creme) 28%); }
 .curto, .so-cel, .mini-resumo { display: none; }
+/* lançamento mensal */
+.zona-pdf { border: 2px dashed var(--tracejado); background: var(--celula); padding: 22px 18px; display: grid; gap: 12px; justify-items: start; }
+.zona-pdf.arrastando { border-color: var(--ferrugem-borda); background: var(--papel); box-shadow: inset 0 0 0 3px var(--dourado); }
+.zona-pdf p { margin: 0; font-size: 14.5px; }
+.dias-mes { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x proximity; }
+.dia-mes { all: unset; cursor: pointer; flex: none; scroll-snap-align: start; display: grid; gap: 1px; min-width: 96px; box-sizing: border-box; padding: 8px 10px; border: 2px solid var(--tracejado); background: var(--papel); }
+.dia-mes b { font-family: var(--f-titulo); font-size: 19px; font-variant-numeric: tabular-nums; }
+.dia-mes small { font-size: 11px; font-weight: 800; letter-spacing: .04em; color: var(--secundario); white-space: nowrap; }
+.dia-mes .st { color: var(--ferrugem-txt); }
+.dia-mes.pronto .st { color: var(--tinta); }
+.dia-mes.salvo { background: var(--celula); }
+.dia-mes.salvo .st { color: var(--secundario); }
+.dia-mes.ativo { border-color: var(--ferrugem-borda); box-shadow: 3px 3px 0 var(--dourado); }
+.dia-mes:focus-visible { outline: 3px solid var(--dourado); }
+.mm-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mm-topo .eyebrow { margin: 0; }
+.mm-arq { font-size: 13px; color: var(--secundario); overflow-wrap: anywhere; }
+.mm-acoes { display: flex; gap: 14px; flex-wrap: wrap; }
+.mm-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.barra-salvar.mes .mini-resumo { display: grid; flex: 1; min-width: 0; line-height: 1.1; margin-right: auto; }
+.barra-salvar.mes .mini-resumo span { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--secundario); }
+.barra-salvar.mes .mini-resumo b { font-family: var(--f-titulo); font-size: 22px; }
+.barra-salvar.mes .mini-resumo small { font-size: 12px; color: var(--secundario); }
 td small.so-cel { font-size: 12px; color: var(--secundario); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .faixa-edicao { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 14px; background: var(--dourado); color: #241e19; font-weight: 700; border: 2px solid #241e19; box-shadow: 4px 4px 0 var(--ferrugem); margin-bottom: 22px; }
 .faixa-edicao .btn { margin-left: auto; background: #fff5e5; color: #8c362a; border-color: #241e19; box-shadow: none; }
@@ -375,7 +398,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   .lateral .logo span { margin: 0; text-align: right; font-size: 10.5px; }
   .lateral .pe, .nav .grupo, .longo { display: none; }
   .curto { display: inline; }
-  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; margin: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0;
+  .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; margin: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0;
     background: var(--terra); border-top: 4px solid var(--dourado);
     padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
   .nav button { margin: 0; flex-direction: column; justify-content: center; gap: 4px; min-height: var(--nav-h); padding: 6px 2px; border: 0; border-top: 4px solid transparent; margin-top: -4px;
@@ -407,6 +430,10 @@ footer.rodape img { width: 150px; height: auto; display: block; }
     background: var(--papel); border-top: 2px solid var(--ferrugem-borda); box-shadow: 0 -6px 0 var(--creme); margin-top: 22px; flex-wrap: nowrap; align-items: center; gap: 8px; }
   .barra-salvar .btn { flex: 1; min-height: 50px; padding: 0 10px; box-shadow: 2px 2px 0 var(--sombra); }
   .barra-salvar .btn.grande { font-size: 16px; }
+  .barra-salvar.mes { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; }
+  .barra-salvar.mes .mini-resumo { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 0; }
+  .barra-salvar.mes .mini-resumo b { font-size: 18px; }
+  .barra-salvar.mes .btn { min-height: 46px; font-size: 13px; }
   .barra-salvar.lanc .mini-resumo { display: grid; flex: 1.3; min-width: 0; line-height: 1.1; }
   .mini-resumo span { font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--secundario); }
   .mini-resumo b { font-family: var(--f-titulo); font-size: 24px; color: var(--ferrugem-txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -504,6 +531,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
     <nav class="nav" aria-label="Seções">
       <div class="grupo">LANÇAR</div>
       <button data-aba="lancamento" class="ativa"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M7 1h2v6h6v2H9v6H7V9H1V7h6z"/></svg><span class="longo">Lançamento do dia</span><span class="curto">Lançar</span></button>
+      <button data-aba="mensal"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 0h2v2h6V0h2v2h3v14H0V2h3zM2 6v8h12V6zm2 2h2v2H4zm3 0h2v2H7zm3 0h2v2h-2zm-6 3h2v2H4zm3 0h2v2H7z"/></svg><span class="longo">Lançamento mensal</span><span class="curto">Mês</span></button>
       <div class="grupo">ACOMPANHAR</div>
       <button data-aba="salvos"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l8 8-8 8-8-8z"/></svg><span class="longo">Lançamentos salvos</span><span class="curto">Salvos</span></button>
       <button data-aba="relatorio"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v12H1zm2 2v2h10V4zm0 4v2h10V8zm0 4h6v-1H3z"/></svg><span class="longo">Relatório</span><span class="curto">Relatório</span></button>
@@ -624,6 +652,94 @@ footer.rodape img { width: 150px; height: auto; display: block; }
         <div class="mini-resumo" aria-live="polite"><span>A distribuir</span><b id="m-liq">R$ 0,00</b><small id="m-info">ninguém ainda</small></div>
         <button class="btn" id="limpar">Limpar</button>
         <button class="btn principal grande" id="salvar">Salvar</button>
+      </div>
+    </section>
+
+    <!-- ===== MENSAL ===== -->
+    <section class="tela" id="tela-mensal" hidden>
+      <header class="cabeca">
+        <div>
+          <div class="eyebrow">Lançar</div>
+          <h1>Lançamento mensal</h1>
+          <p>Envie de uma vez os relatórios de cada dia do mês. O site lê a data e a taxa de cada um e coloca os dias em ordem. Depois é só ir dia a dia marcando quem trabalhou e salvar o mês todo.</p>
+        </div>
+      </header>
+
+      <div class="painel listrado pilha">
+        <h2>Relatórios <span class="conta" id="mm-conta"></span></h2>
+        <div id="mm-zona" class="zona-pdf">
+          <p>Arraste aqui os relatórios do mês (<b>PDF, Excel, CSV ou TXT</b>), um arquivo por dia. Pode escolher vários de uma vez.</p>
+          <div class="mm-acoes">
+            <button class="btn principal" id="mm-btn" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 11V2M4 6l4-4 4 4M2 14h12"/></svg>Escolher arquivos</button>
+            <button class="btn" id="mm-sem" type="button">Adicionar dia sem arquivo</button>
+          </div>
+          <input id="mm-arquivos" type="file" multiple accept=".pdf,.xlsx,.xls,.csv,.txt" class="sr" tabindex="-1">
+          <p id="mm-lendo" class="muted" hidden></p>
+        </div>
+        <div id="mm-tira" class="pilha" style="gap:8px" hidden>
+          <div class="mm-topo"><span class="eyebrow">Dias · toque para abrir</span><button class="link-btn" id="mm-recomecar" type="button">Recomeçar o mês</button></div>
+          <div id="mm-dias" class="dias-mes" role="list"></div>
+        </div>
+      </div>
+
+      <div id="mm-trabalho" class="grade-lanc" style="margin-top:28px" hidden>
+        <div class="coluna">
+          <div class="painel listrado pilha">
+            <div class="mm-topo"><h2 style="margin:0" id="mm-titulo">Dia</h2><button class="link-btn" id="mm-tirar" type="button">Tirar este dia</button></div>
+            <div id="mm-arq" class="mm-arq"></div>
+            <label class="campo" for="mm-data"><span>Data</span><input type="date" id="mm-data"></label>
+            <div id="mm-cands" class="pilha" style="gap:6px" hidden></div>
+            <label class="campo" for="mm-valor"><span>Taxa de atendimento gerada no dia</span>
+              <div class="moeda"><i>R$</i><input id="mm-valor" inputmode="decimal" placeholder="0,00" autocomplete="off"></div>
+            </label>
+            <label class="campo" for="mm-obs"><span>Observação (opcional)</span><input id="mm-obs" placeholder="Ex.: feriado, evento"></label>
+          </div>
+
+          <div class="painel listrado pilha">
+            <h2>Quem trabalhou</h2>
+            <button class="btn" id="mm-repetir" type="button">Repetir a equipe do dia anterior</button>
+            <div class="grupos-chips">
+              <div class="grupo-chips">
+                <div class="grupo-topo"><span class="eyebrow">Fixos <b id="mm-n-fixo"></b></span><button class="link-btn" type="button" data-mtodos="fixo">Marcar todos</button></div>
+                <div id="mm-chips-fixo" class="chips"></div>
+              </div>
+              <div class="grupo-chips">
+                <div class="grupo-topo"><span class="eyebrow">Diaristas <b id="mm-n-diarista"></b></span><button class="link-btn" type="button" data-mtodos="diarista">Marcar todos</button></div>
+                <div id="mm-chips-diarista" class="chips"></div>
+              </div>
+            </div>
+            <form id="mm-form" class="mm-add">
+              <label class="sr" for="mm-nome">Nome de quem não está na equipe</label>
+              <input id="mm-nome" list="nomes" placeholder="Outro nome (não cadastrado)" autocomplete="off">
+              <button class="btn" type="submit">Adicionar</button>
+            </form>
+            <ul id="mm-lista" class="lista-dia"></ul>
+            <div id="mm-vazio" class="vazio">Ninguém marcado neste dia.</div>
+          </div>
+        </div>
+
+        <div class="painel listrado resumo">
+          <h2>Divisão do dia</h2>
+          <dl class="numeros">
+            <div><dt>Valor gerado</dt><dd id="mm-r-bruto">R$ 0,00</dd></div>
+            <div id="mm-r-rets" style="display:contents"></div>
+            <div class="dist"><dt>A distribuir</dt><dd id="mm-r-liq">R$ 0,00</dd></div>
+            <div class="qtd"><dt>Colaboradores selecionados</dt><dd id="mm-r-qtd">0</dd></div>
+          </dl>
+          <div class="rolagem">
+            <table>
+              <thead><tr><th>Colaborador</th><th>Categoria</th><th class="num">Recebe</th></tr></thead>
+              <tbody id="mm-r-itens"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="mm-barra" class="barra-salvar mes" hidden>
+        <div class="mini-resumo" aria-live="polite"><span>Total do mês</span><b id="mm-m-total">R$ 0,00</b><small id="mm-m-info"></small></div>
+        <button class="btn" id="mm-ant">Anterior</button>
+        <button class="btn" id="mm-prox">Próximo</button>
+        <button class="btn principal grande" id="mm-salvar">Salvar mês</button>
       </div>
     </section>
 
@@ -1162,7 +1278,7 @@ $('#sair').addEventListener('click', () => { if (fb) fb.au.signOut(fb.auth); els
 /* ============================================================
    NAVEGAÇÃO
    ============================================================ */
-const ABAS = ['lancamento', 'salvos', 'relatorio', 'equipe', 'config'];
+const ABAS = ['lancamento', 'mensal', 'salvos', 'relatorio', 'equipe', 'config'];
 let abaAtual = 'lancamento';
 function irPara(a) {
   if (!ABAS.includes(a)) a = 'lancamento';
@@ -1181,7 +1297,7 @@ async function podeSairDaConfig(destino) {
 $$('.nav button').forEach((b) => b.addEventListener('click', async () => { if (await podeSairDaConfig(b.dataset.aba)) irPara(b.dataset.aba); }));
 function renderTudo() {
   if ($('#app').hidden) return;
-  ({ lancamento: renderLanc, salvos: renderSalvos, relatorio: renderRel, equipe: renderEquipe, config: renderCats })[abaAtual]();
+  ({ lancamento: renderLanc, mensal: renderMensal, salvos: renderSalvos, relatorio: renderRel, equipe: renderEquipe, config: renderCats })[abaAtual]();
 }
 const nomeCat = (id, cats = cfg().categorias) => (cats.find((c) => c.id === id) || {}).nome || '—';
 const opcoesCat = (sel, cats = cfg().categorias) => cats.map((c) => `<option value="${esc(c.id)}"${c.id === sel ? ' selected' : ''}>${esc(c.nome)}</option>`).join('');
@@ -1371,6 +1487,209 @@ function analisar(texto) {
   const m = texto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
   return { candidatos: cand.filter((c, i, a) => a.findIndex((x) => x.valor === c.valor && x.linha === c.linha) === i).slice(0, 8), data: m ? `${m[3]}-${m[2]}-${m[1]}` : null };
 }
+
+/* ============================================================
+   LANÇAMENTO MENSAL
+   Vários relatórios de uma vez; cada dia vira um lançamento comum.
+   O rascunho fica guardado neste navegador até ser salvo.
+   ============================================================ */
+const MKEY = 'repax-mensal';
+let M = (() => { try { const m = JSON.parse(localStorage.getItem(MKEY)); if (m && Array.isArray(m.dias)) return m; } catch {} return { dias: [], atual: 0 }; })();
+const guardarM = () => { try { localStorage.setItem(MKEY, JSON.stringify(M)); } catch {} };
+const diaM = () => M.dias[M.atual];
+const prontoM = (d) => !!d.data && d.valor > 0 && d.equipe.length > 0;
+const regrasM = () => ({ retencoes: cfg().retencoes, modo: cfg().modoDivisao, categorias: cfg().categorias });
+const calcM = (d) => { const r = regrasM(); return Calc.calcular({ valorBruto: d.valor, retencoes: r.retencoes, colaboradores: d.equipe, modo: r.modo, categorias: r.categorias }); };
+const ordenarM = () => { const cur = diaM(); M.dias.sort((a, b) => (a.data || '9999').localeCompare(b.data || '9999')); M.atual = Math.max(0, M.dias.indexOf(cur)); };
+function mexeu(d = diaM()) { if (d) d.salvo = false; guardarM(); }
+
+async function importarM(files) {
+  files = [...files]; if (!files.length) return;
+  const st = $('#mm-lendo'); st.hidden = false;
+  const ja = files.filter((f) => M.dias.some((d) => d.arquivo === f.name));
+  files = files.filter((f) => !ja.includes(f));
+  if (ja.length) toast(ja.length > 1 ? `${ja.length} arquivos já estavam na lista e foram ignorados.` : `${ja[0].name} já estava na lista.`, true);
+  if (!files.length) { st.hidden = true; return; }
+  let n = 0, semValor = 0; const novos = [];
+  for (const f of files) {
+    st.textContent = `Lendo ${++n} de ${files.length}: ${f.name}…`;
+    const d = { id: novoId(), arquivo: f.name, data: '', valor: 0, cands: [], equipe: [], obs: '', salvo: false };
+    try {
+      const r = analisar(await lerArquivo(f));
+      d.data = r.data || ''; d.cands = r.candidatos.map((c) => ({ linha: c.linha, valor: c.valor }));
+      d.valor = d.cands.length ? d.cands[0].valor : 0;
+    } catch { d.erro = true; }
+    if (!d.valor) semValor++;
+    M.dias.push(d); novos.push(d);
+  }
+  ordenarM(); M.atual = Math.min(...novos.map((d) => M.dias.indexOf(d))); guardarM();
+  st.hidden = true;
+  if (!ja.length) toast(`${files.length} ${files.length > 1 ? 'relatórios lidos' : 'relatório lido'}.` + (semValor ? ` Em ${semValor} não achei a taxa; digite o valor.` : ' Confira o valor de cada dia.'), semValor > 0);
+  renderMensal();
+}
+$('#mm-btn').addEventListener('click', () => $('#mm-arquivos').click());
+$('#mm-arquivos').addEventListener('change', () => { const f = $('#mm-arquivos').files; importarM(f).finally(() => ($('#mm-arquivos').value = '')); });
+const zona = $('#mm-zona');
+['dragenter', 'dragover'].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.add('arrastando'); }));
+['dragleave', 'drop'].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); if (ev === 'dragleave' && zona.contains(e.relatedTarget)) return; zona.classList.remove('arrastando'); }));
+zona.addEventListener('drop', (e) => importarM(e.dataTransfer.files));
+$('#mm-sem').addEventListener('click', () => {
+  const ult = M.dias.filter((d) => d.data).map((d) => d.data).sort().pop();
+  const d = { id: novoId(), arquivo: '', data: ult ? somaDias(ult, 1) : hoje(), valor: 0, cands: [], equipe: [], obs: '', salvo: false };
+  M.dias.push(d); ordenarM(); M.atual = M.dias.indexOf(d); guardarM(); renderMensal(); $('#mm-valor').focus();
+});
+$('#mm-recomecar').addEventListener('click', async () => {
+  const pend = M.dias.filter((d) => !d.salvo).length;
+  if (!(await confirmar('Recomeçar o mês?', pend ? `Há <b>${pend}</b> ${pend > 1 ? 'dias ainda não salvos' : 'dia ainda não salvo'}. Eles serão descartados. Dias já salvos continuam em Lançamentos salvos.` : 'A lista de dias desta tela será limpa. Os dias já salvos continuam em Lançamentos salvos.', 'Recomeçar'))) return;
+  M = { dias: [], atual: 0 }; guardarM(); renderMensal();
+});
+$('#mm-tirar').addEventListener('click', async () => {
+  const d = diaM(); if (!d) return;
+  if ((d.equipe.length || d.valor) && !d.salvo && !(await confirmar('Tirar este dia?', `O dia ${d.data ? dataBR(d.data) : 'sem data'} sai da lista do mês e não será salvo.`, 'Tirar'))) return;
+  M.dias.splice(M.atual, 1); M.atual = Math.min(M.atual, M.dias.length - 1); guardarM(); renderMensal();
+});
+
+$('#mm-data').addEventListener('change', () => { const d = diaM(); d.data = $('#mm-data').value; ordenarM(); mexeu(d); renderMensal(); });
+$('#mm-valor').addEventListener('input', () => { const d = diaM(); d.valor = Calc.parseValor($('#mm-valor').value); mexeu(d); $$('#mm-cands .cand').forEach((b) => b.classList.toggle('sel', Number(b.dataset.v) === d.valor)); resumoM(); tiraM(); });
+$('#mm-valor').addEventListener('blur', () => { const v = Calc.parseValor($('#mm-valor').value); $('#mm-valor').value = v ? num2(v) : ''; });
+$('#mm-obs').addEventListener('input', () => { diaM().obs = $('#mm-obs').value; mexeu(); });
+
+function irDiaM(i) { if (i < 0 || i >= M.dias.length) return; M.atual = i; guardarM(); renderMensal(); const b = $('#mm-dias .dia-mes.ativo'); if (b) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+$('#mm-ant').addEventListener('click', () => { irDiaM(M.atual - 1); $('#mm-trabalho').scrollIntoView({ block: 'start' }); });
+$('#mm-prox').addEventListener('click', () => { irDiaM(M.atual + 1); $('#mm-trabalho').scrollIntoView({ block: 'start' }); });
+
+$('#mm-repetir').addEventListener('click', () => {
+  const d = diaM(), ant = M.dias.slice(0, M.atual).reverse().find((x) => x.equipe.length);
+  if (!ant) return toast('Nenhum dia anterior com equipe marcada.', true);
+  d.equipe = ant.equipe.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, tipo: c.tipo }));
+  mexeu(d); renderMensal(); toast(`Equipe de ${dataBR(ant.data)} copiada (${d.equipe.length}).`);
+});
+$$('[data-mtodos]').forEach((b) => b.addEventListener('click', () => {
+  const d = diaM(), t = b.dataset.mtodos, tem = (c) => d.equipe.some((x) => norm(x.nome) === norm(c.nome));
+  const l = D.equipe.filter((c) => tipoDe(c) === t);
+  if (l.every(tem)) d.equipe = d.equipe.filter((x) => !l.some((c) => norm(c.nome) === norm(x.nome)));
+  else l.forEach((c) => { if (!tem(c)) d.equipe.push({ nome: c.nome, categoriaId: c.categoriaId, tipo: t }); });
+  mexeu(d); renderMensal();
+}));
+$('#mm-form').addEventListener('submit', (e) => {
+  e.preventDefault(); const d = diaM();
+  $('#mm-nome').value.split(/[,;\n]/).map((n) => n.trim().replace(/\s+/g, ' ')).filter(Boolean).forEach((n) => {
+    if (d.equipe.some((x) => norm(x.nome) === norm(n))) return toast(n + ' já está neste dia.', true);
+    const m = D.equipe.find((c) => norm(c.nome) === norm(n));
+    d.equipe.push(m ? { nome: m.nome, categoriaId: m.categoriaId, tipo: tipoDe(m) } : { nome: n, categoriaId: (cfg().categorias[0] || {}).id, tipo: 'diarista' });
+  });
+  $('#mm-nome').value = ''; mexeu(d); renderMensal();
+});
+
+function tiraM() {
+  $('#mm-dias').innerHTML = M.dias.map((d, i) => {
+    const st = d.salvo ? '✓ salvo' : !d.data ? 'sem data' : !(d.valor > 0) ? 'sem valor' : !d.equipe.length ? 'falta equipe' : `${d.equipe.length} ${d.equipe.length > 1 ? 'pessoas' : 'pessoa'}`;
+    const cls = ['dia-mes', i === M.atual ? 'ativo' : '', d.salvo ? 'salvo' : prontoM(d) ? 'pronto' : ''].join(' ');
+    return `<button class="${cls}" role="listitem" data-i="${i}" aria-current="${i === M.atual}"><small>${d.data ? esc(diaSem(d.data).slice(0, 3)) : '—'}</small><b>${d.data ? dataBR(d.data).slice(0, 5) : '??/??'}</b><small>${d.valor > 0 ? brl(d.valor) : '—'}</small><small class="st">${st}</small></button>`;
+  }).join('');
+  $$('#mm-dias .dia-mes').forEach((b) => b.addEventListener('click', () => irDiaM(Number(b.dataset.i))));
+  const pend = M.dias.filter((d) => !d.salvo), prontos = pend.filter(prontoM);
+  const total = M.dias.reduce((a, d) => a + (d.valor > 0 ? d.valor : 0), 0);
+  $('#mm-conta').textContent = M.dias.length ? `${M.dias.length} ${M.dias.length > 1 ? 'dias' : 'dia'}` : '';
+  $('#mm-m-total').textContent = brl(total);
+  const salvos = M.dias.length - pend.length;
+  $('#mm-m-info').textContent = `${prontos.length} de ${pend.length} prontos para salvar` + (salvos ? ` · ${salvos} já salvos` : '');
+  $('#mm-salvar').textContent = prontos.length ? `Salvar ${prontos.length} ${prontos.length > 1 ? 'dias' : 'dia'}` : 'Salvar mês';
+  $('#mm-salvar').disabled = !prontos.length;
+  $('#mm-ant').disabled = M.atual <= 0; $('#mm-prox').disabled = M.atual >= M.dias.length - 1;
+}
+
+function resumoM() {
+  const d = diaM(); if (!d) return;
+  const r = calcM(d);
+  $('#mm-r-bruto').textContent = brl(r.valorBruto); $('#mm-r-liq').textContent = brl(r.valorLiquido); $('#mm-r-qtd').textContent = String(d.equipe.length);
+  const rets = r.retencoes.filter((x) => x.pct > 0);
+  $('#mm-r-rets').innerHTML = rets.length ? rets.map((x) => `<div class="ret"><dt>${esc(x.nome)} · ${pctBR(x.pct)}%</dt><dd>− ${brl(x.valor)}</dd></div>`).join('') : '<div class="ret"><dt>Sem retenção</dt><dd>R$ 0,00</dd></div>';
+  $('#mm-r-itens').innerHTML = r.itens.length
+    ? r.itens.map((it) => `<tr><td>${esc(it.nome)}</td><td><span class="tag cat">${esc(it.categoria)}</span></td><td class="num"><span class="valor">${brl(it.valor)}</span>${it.consumo > 0 ? `<small class="desc">consumo − ${brl(it.consumo)}</small>` : ''}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="muted">Marque quem trabalhou para ver quanto cada um recebe.</td></tr>';
+}
+
+function renderMensal() {
+  const tem = M.dias.length > 0;
+  $('#mm-tira').hidden = !tem; $('#mm-trabalho').hidden = !tem; $('#mm-barra').hidden = !tem;
+  if (!tem) { $('#mm-conta').textContent = ''; return; }
+  M.atual = Math.min(Math.max(0, M.atual), M.dias.length - 1);
+  const d = diaM(), cats = cfg().categorias;
+  tiraM();
+  $('#mm-titulo').textContent = d.data ? `${dataBR(d.data)}` : 'Dia sem data';
+  $('#mm-arq').textContent = `Dia ${M.atual + 1} de ${M.dias.length}` + (d.arquivo ? ` · ${d.arquivo}` : ' · sem arquivo') + (d.salvo ? ' · já salvo (mudanças pedem salvar de novo)' : '');
+  if (document.activeElement !== $('#mm-data')) $('#mm-data').value = d.data || '';
+  if (document.activeElement !== $('#mm-valor')) $('#mm-valor').value = d.valor > 0 ? num2(d.valor) : '';
+  if (document.activeElement !== $('#mm-obs')) $('#mm-obs').value = d.obs || '';
+  const box = $('#mm-cands');
+  if (d.erro) { box.hidden = false; box.innerHTML = '<p class="muted" style="margin:0">Não consegui abrir este arquivo. Digite o valor.</p>'; }
+  else if (d.arquivo && !d.cands.length) { box.hidden = false; box.innerHTML = '<p class="muted" style="margin:0">Não achei a taxa de atendimento neste relatório. Digite o valor.</p>'; }
+  else if (d.cands.length > 1) {
+    box.hidden = false;
+    box.innerHTML = '<p class="muted" style="margin:0;font-size:13px">Valores encontrados no relatório. Toque no certo.</p>' + d.cands.map((c) => `<button class="cand${c.valor === d.valor ? ' sel' : ''}" data-v="${c.valor}"><small>${esc(c.linha)}</small><b>${brl(c.valor)}</b></button>`).join('');
+    $$('#mm-cands .cand').forEach((b) => b.addEventListener('click', () => { d.valor = Number(b.dataset.v); mexeu(d); renderMensal(); }));
+  } else { box.hidden = true; box.innerHTML = ''; }
+
+  const eq = D.equipe.slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const marcado = (c) => d.equipe.some((x) => norm(x.nome) === norm(c.nome));
+  ['fixo', 'diarista'].forEach((t) => {
+    const l = eq.filter((c) => tipoDe(c) === t), sel = l.filter(marcado).length;
+    $('#mm-n-' + t).textContent = l.length ? `${sel}/${l.length}` : '';
+    $('#mm-chips-' + t).innerHTML = l.length ? l.map((c) => `<button class="chip${marcado(c) ? ' on' : ''}" data-id="${esc(c.id)}" aria-pressed="${marcado(c)}">${esc(c.nome)}<small>${esc(nomeCat(c.categoriaId, cats))}</small></button>`).join('')
+      : `<span class="muted" style="font-size:13.5px">${t === 'fixo' ? 'Nenhum fixo cadastrado.' : 'Nenhum diarista cadastrado.'}</span>`;
+    const b = $(`[data-mtodos="${t}"]`); b.hidden = !l.length; b.textContent = l.length && sel === l.length ? 'Desmarcar todos' : 'Marcar todos';
+  });
+  $$('#mm-trabalho .grupos-chips .chip').forEach((b) => b.addEventListener('click', () => {
+    const c = D.equipe.find((x) => x.id === b.dataset.id), i = d.equipe.findIndex((x) => norm(x.nome) === norm(c.nome));
+    if (i >= 0) d.equipe.splice(i, 1); else d.equipe.push({ nome: c.nome, categoriaId: c.categoriaId, tipo: tipoDe(c) });
+    mexeu(d); renderMensal();
+  }));
+  const ant = M.dias.slice(0, M.atual).reverse().find((x) => x.equipe.length);
+  $('#mm-repetir').hidden = !ant;
+  if (ant) $('#mm-repetir').textContent = `Repetir a equipe de ${dataBR(ant.data).slice(0, 5)} (${ant.equipe.length})`;
+
+  $('#mm-lista').innerHTML = d.equipe.map((c, i) => `<li><b>${esc(c.nome)}${c.tipo === 'diarista' ? '<span class="tag">Diarista</span>' : ''}</b><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select><label class="consumo" title="Consumo do colaborador no dia, descontado da gorjeta dele"><span>R$</span><input data-cons="${i}" inputmode="decimal" placeholder="Consumo" value="${c.consumo ? num2(c.consumo) : ''}" aria-label="Consumo de ${esc(c.nome)}"></label><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`).join('');
+  $$('#mm-lista select').forEach((s) => s.addEventListener('change', () => { d.equipe[s.dataset.i].categoriaId = s.value; mexeu(d); resumoM(); }));
+  $$('#mm-lista [data-cons]').forEach((i) => {
+    i.addEventListener('input', () => { d.equipe[i.dataset.cons].consumo = Calc.parseValor(i.value); mexeu(d); resumoM(); });
+    i.addEventListener('blur', () => { const v = Calc.parseValor(i.value); i.value = v ? num2(v) : ''; tiraM(); });
+  });
+  $$('#mm-lista [data-rm]').forEach((b) => b.addEventListener('click', () => { d.equipe.splice(b.dataset.rm, 1); mexeu(d); renderMensal(); }));
+  $('#mm-vazio').hidden = d.equipe.length > 0;
+  resumoM();
+}
+
+$('#mm-salvar').addEventListener('click', async () => {
+  const rg = regrasM(), pend = M.dias.filter((d) => !d.salvo), prontos = pend.filter(prontoM);
+  if (!prontos.length) return toast('Nenhum dia pronto. Cada dia precisa de data, valor e equipe.', true);
+  if (rg.modo === 'categoria') { const s = rg.categorias.reduce((a, c) => a + Number(c.pct || 0), 0); if (Math.abs(s - 100) > 0.001) return toast(`As categorias somam ${s}%. Ajuste para 100% em Configurações.`, true); }
+  const ids = new Set(M.dias.map((d) => d.id));
+  const repetidos = [...new Set(prontos.filter((d) => D.lanc.some((l) => l.data === d.data && !ids.has(l.id)) || prontos.filter((x) => x.data === d.data).length > 1).map((d) => d.data))].sort();
+  const faltam = pend.length - prontos.length;
+  let txt = `Serão salvos <b>${prontos.length}</b> ${prontos.length > 1 ? 'dias' : 'dia'}, somando <b>${brl(prontos.reduce((a, d) => a + d.valor, 0))}</b>.`;
+  if (faltam) txt += `<br><br>${faltam} ${faltam > 1 ? 'dias ainda não estão prontos e ficam' : 'dia ainda não está pronto e fica'} aqui para depois.`;
+  if (repetidos.length) txt += `<br><br>Atenção: já existe lançamento em <b>${repetidos.map(dataBR).join(', ')}</b>. Salvar deixa dois lançamentos no mesmo dia.`;
+  if (!(await confirmar('Salvar o mês?', txt, 'Salvar'))) return;
+  const btn = $('#mm-salvar'); btn.disabled = true;
+  const cats = rg.categorias.map((c) => ({ id: c.id, nome: c.nome, pct: Number(c.pct) || 0, peso: pesoDe(c) }));
+  let ok = 0;
+  for (const d of prontos) {
+    const r = calcM(d), antigo = D.lanc.find((x) => x.id === d.id), agora = new Date().toISOString();
+    const l = { id: d.id, data: d.data, valorBruto: r.valorBruto, retencoes: r.retencoes, retencaoPct: r.retencaoPct, valorRetido: r.valorRetido, valorLiquido: r.valorLiquido,
+      modo: r.modo, categorias: cats, colaboradores: r.itens, origem: d.arquivo ? 'relatorio' : 'manual', arquivo: d.arquivo || null, obs: (d.obs || '').trim(),
+      criadoEm: (antigo && antigo.criadoEm) || agora, atualizadoEm: agora };
+    if (!(await salvarLanc(l))) break;
+    d.salvo = true; ok++; guardarM();
+  }
+  const novos = new Map();
+  prontos.filter((d) => d.salvo).forEach((d) => d.equipe.forEach((c) => { if (!D.equipe.some((m) => norm(m.nome) === norm(c.nome)) && !novos.has(norm(c.nome))) novos.set(norm(c.nome), c); }));
+  for (const c of novos.values()) await salvarMembro({ id: novoId(), nome: c.nome, categoriaId: c.categoriaId, tipo: c.tipo });
+  btn.disabled = false;
+  if (ok) toast(`${ok} ${ok > 1 ? 'dias salvos' : 'dia salvo'}. Eles já aparecem em Lançamentos salvos e no Relatório.`);
+  const prox = M.dias.findIndex((d) => !d.salvo); if (prox >= 0) M.atual = prox;
+  guardarM(); renderMensal();
+});
 
 /* ============================================================
    LANÇAMENTOS SALVOS
