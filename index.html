@@ -217,7 +217,7 @@ input[type=date] { font-variant-numeric: tabular-nums; }
 .add-col.form-eq { grid-template-columns: minmax(0, 1fr) minmax(0, 170px) minmax(0, 140px) minmax(0, 120px) auto; }
 input.cpf { font-variant-numeric: tabular-nums; }
 input.cpf.ruim { border-color: var(--perigo); }
-td small.cpf { display: block; font-size: 12px; color: var(--secundario); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+td small.cpf { display: block; white-space: nowrap; font-size: 12px; color: var(--secundario); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .t-equipe input, .t-equipe select { min-height: 44px; width: 100%; }
 .periodo { display: grid; gap: 14px; margin-bottom: 24px; }
 .rp-linha { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
@@ -236,8 +236,14 @@ td small.cpf { display: block; font-size: 12px; color: var(--secundario); font-w
 .chip.on small { color: inherit; opacity: .8; }
 .chip:focus-visible { outline: 3px solid var(--dourado); }
 .lista-dia { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.lista-dia li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 150px) 44px; gap: 8px; align-items: center; padding: 4px 4px 4px 14px; background: var(--celula); border-left: 4px solid var(--dourado); }
+.lista-dia li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 130px) minmax(0, 130px) 44px; gap: 8px; align-items: center; padding: 4px 4px 4px 14px; background: var(--celula); border-left: 4px solid var(--dourado); }
 .lista-dia li b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lista-dia .consumo { display: flex; align-items: center; background: var(--papel); border: 2px solid var(--tracejado); min-height: 40px; }
+.lista-dia .consumo span { font-size: 11px; font-weight: 800; color: var(--secundario); padding-left: 8px; white-space: nowrap; }
+.lista-dia .consumo input { border: 0; background: transparent; min-height: 36px; padding: 4px 8px 4px 4px; width: 100%; font-variant-numeric: tabular-nums; text-align: right; box-shadow: none !important; }
+.lista-dia .consumo:focus-within { border-color: var(--ferrugem-borda); }
+td small.desc { display: block; font-size: 12px; color: var(--secundario); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pendente { color: var(--perigo); }
 .lista-dia select { min-height: 40px; padding: 6px 8px; font-size: 14px; background: var(--papel); }
 .x { all: unset; cursor: pointer; width: 44px; height: 40px; display: grid; place-items: center; font-size: 22px; color: var(--perigo); }
 .x:hover { background: var(--papel); }
@@ -425,6 +431,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   .t-salvos tr.detalhe > td { display: block; padding: 4px 12px 14px; }
   /* Equipe em linhas compactas */
   .so-desk { display: none; }
+  td small.cpf, td small.desc { white-space: normal; font-size: 11.5px; }
   td small.so-cel { display: block; }
   .kpis { gap: 12px; margin-bottom: 22px; }
   .kpi { padding: 10px 12px; border-top-width: 5px; box-shadow: 3px 3px 0 var(--sombra); }
@@ -459,7 +466,8 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   .barra-salvar .sujo { flex: 1.2; }
 }
 @media (max-width: 420px) {
-  .lista-dia li { grid-template-columns: minmax(0, 1fr) minmax(0, 112px) 40px; padding-left: 10px; }
+  .lista-dia li { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px; padding-left: 10px; }
+  .lista-dia li b { grid-column: 1 / -1; padding-top: 6px; }
   .x { width: 40px; }
   .barra-salvar.lanc #limpar { width: 64px; }
   .mini-resumo b { font-size: 21px; }
@@ -919,7 +927,7 @@ const Calc = (() => {
     return {
       valorBruto: fromC(bruto), retencoes: rv, retencaoPct: Math.round(rs.reduce((a, r) => a + r.pct, 0) * 100) / 100,
       valorRetido: fromC(ret), valorLiquido: fromC(liq), modo,
-      itens: colaboradores.map((c, i) => ({ nome: c.nome, categoriaId: c.categoriaId, categoria: (categorias.find((x) => x.id === c.categoriaId) || {}).nome || '', valor: fromC(v[i]) })),
+      itens: colaboradores.map((c, i) => ({ nome: c.nome, categoriaId: c.categoriaId, categoria: (categorias.find((x) => x.id === c.categoriaId) || {}).nome || '', valor: fromC(v[i]), consumo: fromC(toC(c.consumo)) })),
     };
   }
   function relatorio(lista) {
@@ -932,14 +940,18 @@ const Calc = (() => {
       dias.push({ data: x.data, valorBruto: x.valorBruto, valorRetido: x.valorRetido, valorLiquido: x.valorLiquido, pessoas: x.colaboradores.length, retencoes: rd });
       x.colaboradores.forEach((c) => {
         const k = c.nome.trim().toLocaleLowerCase('pt-BR');
-        p[k] = p[k] || { nome: c.nome.trim(), cats: new Set(), dias: 0, c: 0 };
-        p[k].dias++; p[k].c += toC(c.valor); if (c.categoria) p[k].cats.add(c.categoria);
+        p[k] = p[k] || { nome: c.nome.trim(), cats: new Set(), dias: 0, c: 0, cons: 0 };
+        p[k].dias++; p[k].c += toC(c.valor); p[k].cons += toC(c.consumo); if (c.categoria) p[k].cats.add(c.categoria);
       });
     });
     return {
       totalBruto: fromC(b), totalRetido: fromC(r), totalLiquido: fromC(l), dias,
+      totalConsumo: fromC(Object.values(p).reduce((a, x) => a + Math.min(x.cons, x.c), 0)),
+      totalPagar: fromC(l - Object.values(p).reduce((a, x) => a + Math.min(x.cons, x.c), 0)),
+      totalPendente: fromC(Object.values(p).reduce((a, x) => a + Math.max(0, x.cons - x.c), 0)),
       retencoes: [...rt.values()].map((o) => ({ id: o.id, nome: o.nome, valor: fromC(o.c) })),
-      colaboradores: Object.values(p).map((x) => ({ nome: x.nome, categoria: [...x.cats].join(', '), dias: x.dias, valor: fromC(x.c) })).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR')),
+      // consumo é descontado da gorjeta do próprio colaborador, nunca abaixo de zero; o que sobrar fica pendente
+      colaboradores: Object.values(p).map((x) => { const desc = Math.min(x.cons, x.c); return { nome: x.nome, categoria: [...x.cats].join(', '), dias: x.dias, valor: fromC(x.c), consumo: fromC(x.cons), desconto: fromC(desc), pagar: fromC(x.c - desc), pendente: fromC(x.cons - desc) }; }).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR')),
     };
   }
   return { calcular, relatorio, parseValor, retDe };
@@ -1228,8 +1240,12 @@ function renderDia() {
     if (i >= 0) F.dia.splice(i, 1); else F.dia.push({ nome: c.nome, categoriaId: c.categoriaId, tipo: tipoDe(c) });
     renderDia();
   }));
-  $('#lista-dia').innerHTML = F.dia.map((c, i) => `<li><b>${esc(c.nome)}${tipoDe(D.equipe.find((m) => norm(m.nome) === norm(c.nome)) || c) === 'diarista' ? '<span class="tag">Diarista</span>' : ''}</b><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`).join('');
+  $('#lista-dia').innerHTML = F.dia.map((c, i) => `<li><b>${esc(c.nome)}${tipoDe(D.equipe.find((m) => norm(m.nome) === norm(c.nome)) || c) === 'diarista' ? '<span class="tag">Diarista</span>' : ''}</b><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select><label class="consumo" title="Consumo do colaborador no dia, descontado da gorjeta dele"><span>R$</span><input data-cons="${i}" inputmode="decimal" placeholder="Consumo" value="${c.consumo ? num2(c.consumo) : ''}" aria-label="Consumo de ${esc(c.nome)}"></label><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`).join('');
   $$('#lista-dia select').forEach((s) => s.addEventListener('change', () => { F.dia[s.dataset.i].categoriaId = s.value; atualizarResumo(); }));
+  $$('#lista-dia [data-cons]').forEach((i) => {
+    i.addEventListener('input', () => { F.dia[i.dataset.cons].consumo = Calc.parseValor(i.value); atualizarResumo(); });
+    i.addEventListener('blur', () => { const v = Calc.parseValor(i.value); i.value = v ? num2(v) : ''; });
+  });
   $$('#lista-dia [data-rm]').forEach((b) => b.addEventListener('click', () => { F.dia.splice(b.dataset.rm, 1); renderDia(); }));
   $('#vazio-dia').hidden = F.dia.length > 0;
   atualizarResumo();
@@ -1258,7 +1274,7 @@ function atualizarResumo() {
     ? 'Por categoria: ' + regras().categorias.map((c) => `${c.nome} ${String(c.pct).replace('.', ',')}%`).join(' · ')
     : n ? `Partes iguais entre ${n} ${n > 1 ? 'pessoas' : 'pessoa'}.` : 'Partes iguais entre quem trabalhou.';
   $('#r-itens').innerHTML = r.itens.length
-    ? r.itens.map((it) => `<tr><td>${esc(it.nome)}</td><td><span class="tag cat">${esc(it.categoria)}</span></td><td class="num"><span class="valor">${brl(it.valor)}</span></td></tr>`).join('')
+    ? r.itens.map((it) => `<tr><td>${esc(it.nome)}</td><td><span class="tag cat">${esc(it.categoria)}</span></td><td class="num"><span class="valor">${brl(it.valor)}</span>${it.consumo > 0 ? `<small class="desc">consumo − ${brl(it.consumo)}</small>` : ''}</td></tr>`).join('')
     : '<tr><td colspan="3" class="muted">Adicione quem trabalhou para ver quanto cada um recebe.</td></tr>';
 }
 
@@ -1294,7 +1310,7 @@ $('#salvar').addEventListener('click', async () => {
 function editar(id) {
   const l = D.lanc.find((x) => x.id === id); if (!l) return;
   irPara('lancamento');
-  F = { editId: l.id, regras: { retencoes: Calc.retDe(l), modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId })) };
+  F = { editId: l.id, regras: { retencoes: Calc.retDe(l), modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, consumo: Number(c.consumo) || 0 })) };
   setOrigem('manual');
   $('#l-data').value = l.data; $('#l-valor').value = num2(l.valorBruto); $('#l-obs').value = l.obs || '';
   $('#faixa-edicao').hidden = false; $('#edicao-data').textContent = dataBR(l.data); $('#titulo-lanc').textContent = 'Editar lançamento'; $('#salvar').textContent = 'Salvar alterações';
@@ -1381,7 +1397,7 @@ function renderSalvos() {
       <td class="acoes c-acoes"><button class="btn mini" data-ed="${esc(l.id)}">Editar</button><button class="btn mini perigo" data-ex="${esc(l.id)}">Excluir</button></td>
     </tr>${aberto === l.id ? `<tr class="detalhe"><td colspan="7">${retTexto(Calc.retDe(l))}${l.obs ? `<p class="muted" style="margin:8px 0">Obs.: ${esc(l.obs)}</p>` : ''}
       <table><thead><tr><th>Colaborador</th><th>Categoria</th><th class="num">Recebeu</th></tr></thead><tbody>
-      ${l.colaboradores.map((c) => `<tr><td>${esc(c.nome)}</td><td>${esc(c.categoria)}</td><td class="num">${brl(c.valor)}</td></tr>`).join('')}</tbody></table></td></tr>` : ''}`).join('');
+      ${l.colaboradores.map((c) => `<tr><td>${esc(c.nome)}</td><td>${esc(c.categoria)}</td><td class="num">${brl(c.valor)}${Number(c.consumo) > 0 ? `<small class="desc">consumo − ${brl(c.consumo)}</small>` : ''}</td></tr>`).join('')}</tbody></table></td></tr>` : ''}`).join('');
   $$('#s-corpo tr.principal').forEach((tr) => {
     const abrir = () => { aberto = aberto === tr.dataset.id ? null : tr.dataset.id; renderSalvos(); };
     tr.addEventListener('click', (e) => { if (!e.target.closest('button')) abrir(); });
@@ -1469,13 +1485,15 @@ function renderRel() {
     <div class="kpis">
       <div class="kpi"><span>Total gerado</span><b>${brl(r.totalBruto)}</b></div>
       ${retsComValor(r).map((x) => `<div class="kpi"><span>${esc(x.nome)}</span><b>${brl(x.valor)}</b></div>`).join('')}
-      <div class="kpi destaque"><span>Total a pagar</span><b>${brl(r.totalLiquido)}</b></div>
+      ${r.totalConsumo > 0 ? `<div class="kpi"><span>Consumo descontado</span><b>${brl(r.totalConsumo)}</b></div>` : ''}
+      <div class="kpi destaque"><span>Total a pagar</span><b>${brl(r.totalPagar)}</b></div>
     </div>
     <div class="rel-grade">
       <div class="painel listrado"><h2>A pagar por colaborador</h2><p class="muted" style="margin:-8px 0 12px">${esc(r.rotulo)} · ${r.dias.length} ${r.dias.length === 1 ? 'dia lançado' : 'dias lançados'}</p>
         <div class="rolagem"><table><thead><tr><th>Colaborador</th><th class="so-desk">Categoria</th><th class="num">Dias</th><th class="num">Recebe</th></tr></thead><tbody>
-        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b>${c.cpf ? `<small class="cpf">CPF ${esc(c.cpf)}</small>` : ''}<small class="so-cel">${esc(c.categoria)}</small></td><td class="so-desk">${esc(c.categoria)}</td><td class="num">${c.dias}</td><td class="num"><span class="valor">${brl(c.valor)}</span></td></tr>`).join('')}
-        <tr class="total"><td>Total</td><td class="so-desk"></td><td></td><td class="num"><span class="valor">${brl(r.totalLiquido)}</span></td></tr></tbody></table></div></div>
+        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b>${c.cpf ? `<small class="cpf">CPF ${esc(c.cpf)}</small>` : ''}<small class="so-cel">${esc(c.categoria)}</small></td><td class="so-desk">${esc(c.categoria)}</td><td class="num">${c.dias}</td><td class="num"><span class="valor">${brl(c.pagar)}</span>${c.consumo > 0 ? `<small class="desc">gorjeta ${brl(c.valor)}</small><small class="desc">consumo − ${brl(c.desconto)}</small>` : ''}${c.pendente > 0 ? `<small class="desc pendente">consumo restante ${brl(c.pendente)}</small>` : ''}</td></tr>`).join('')}
+        <tr class="total"><td>Total</td><td class="so-desk"></td><td></td><td class="num"><span class="valor">${brl(r.totalPagar)}</span></td></tr></tbody></table></div>
+        ${r.totalPendente > 0 ? `<p class="aviso" style="margin-top:12px">Há consumo maior que a gorjeta do período (${brl(r.totalPendente)}). Esse valor não foi descontado; desconte no próximo pagamento ou na folha.</p>` : ''}</div>
       <div class="painel listrado"><h2>Dia a dia</h2>
         <div class="rolagem"><table><thead><tr><th>Data</th><th class="num">Gerado</th><th class="num">Retido</th><th class="num">Distribuído</th></tr></thead><tbody>
         ${r.dias.map((d) => `<tr><td>${dataBR(d.data)} <small class="muted">${diaSem(d.data).slice(0, 3)}</small></td><td class="num">${brl(d.valorBruto)}</td><td class="num">${brl(d.valorRetido)}</td><td class="num">${brl(d.valorLiquido)}</td></tr>`).join('')}
@@ -1486,9 +1504,9 @@ function renderRel() {
 function semanaPadrao() { const dow = new Date().getDay(); return semana(dow === 1 ? -1 : 0); } // segunda abre a semana que acabou
 
 function textoRel(r) {
-  return `*Taxa de atendimento · ${r.rotulo}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.valor)}`).join('\n') +
+  return `*Taxa de atendimento · ${r.rotulo}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.pagar)}` + (c.consumo > 0 ? ` (gorjeta ${brl(c.valor)} − consumo ${brl(c.desconto)})` : '')).join('\n') +
     `\n\nTotal gerado: ${brl(r.totalBruto)}\n` + r.retencoes.filter((x) => x.valor > 0).map((x) => `${x.nome}: ${brl(x.valor)}\n`).join('') +
-    `*Total a pagar: ${brl(r.totalLiquido)}*`;
+    (r.totalConsumo > 0 ? `Consumo descontado: ${brl(r.totalConsumo)}\n` : '') + `*Total a pagar: ${brl(r.totalPagar)}*`;
 }
 $('#rel-copiar').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
@@ -1510,7 +1528,7 @@ $('#rel-excel').addEventListener('click', async () => {
   try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'); } catch { return toast('Não consegui preparar a planilha. Tente de novo.', true); }
   const wb = XLSX.utils.book_new();
   const add = (nome, linhas) => { const ws = XLSX.utils.aoa_to_sheet(linhas); ws['!cols'] = linhas[0].map((_, i) => ({ wch: Math.max(...linhas.map((l) => String(l[i] ?? '').length)) + 2 })); XLSX.utils.book_append_sheet(wb, ws, nome); };
-  add('A pagar', [['Colaborador', 'CPF', 'Categoria', 'Dias', 'Valor a receber (R$)'], ...r.colaboradores.map((c) => [c.nome, c.cpf || '', c.categoria, c.dias, c.valor]), ['Total', '', '', '', r.totalLiquido]]);
+  add('A pagar', [['Colaborador', 'CPF', 'Categoria', 'Dias', 'Gorjeta (R$)', 'Consumo descontado (R$)', 'A receber (R$)', 'Consumo restante (R$)'], ...r.colaboradores.map((c) => [c.nome, c.cpf || '', c.categoria, c.dias, c.valor, c.desconto, c.pagar, c.pendente]), ['Total', '', '', '', r.totalLiquido, r.totalConsumo, r.totalPagar, r.totalPendente]]);
   add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${x.nome} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
   add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
@@ -1537,7 +1555,8 @@ async function gerarPDF(r, P) {
     if (P.retSeparadas) retsComValor(r).forEach((x) => kp.push([String(x.nome).toUpperCase(), x.valor, false]));
     else kp.push(['TOTAL RETIDO', r.totalRetido, false]);
   }
-  if (P.cardPagar) kp.push(['TOTAL A PAGAR', r.totalLiquido, true]);
+  if (P.cardPagar && r.totalConsumo > 0) kp.push(['CONSUMO DESCONTADO', r.totalConsumo, false]);
+  if (P.cardPagar) kp.push(['TOTAL A PAGAR', r.totalPagar ?? r.totalLiquido, true]);
   const porLinha = Math.ceil(kp.length / Math.ceil(kp.length / 4 || 1));
   for (let i = 0; i < kp.length; i += porLinha) {
     const linha = kp.slice(i, i + porLinha), k = linha.length, bw = (W - 80 - 12 * (k - 1)) / k;
@@ -1572,13 +1591,25 @@ async function gerarPDF(r, P) {
     titulo('VALOR A RECEBER POR COLABORADOR');
     y += 4; textoLivre();
     const cols = [{ h: 'COLABORADOR', v: (c) => c.nome }];
-    if (P.colCpf) cols.push({ h: 'CPF', v: (c) => c.cpf || '', st: { cellWidth: 92 } });
+    if (P.colCpf) cols.push({ h: 'CPF', v: (c) => c.cpf || '', st: { cellWidth: 74 } });
     if (P.colCategoria) cols.push({ h: 'CATEGORIA', v: (c) => c.categoria });
-    if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: { halign: 'right' } });
-    cols.push({ h: 'VALOR', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { halign: 'right', fontStyle: 'bold' } });
+    if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: { halign: 'right', cellWidth: 34 } });
+    if (r.totalConsumo > 0 || r.totalPendente > 0) {
+      cols.push({ h: 'GORJETA', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { halign: 'right', cellWidth: 68 } });
+      cols.push({ h: 'CONSUMO', v: (c) => (c.desconto > 0 ? '- ' + brl(c.desconto) : '-'), t: () => '- ' + brl(r.totalConsumo), st: { halign: 'right', cellWidth: 68 } });
+      cols.push({ h: 'A RECEBER', v: (c) => brl(c.pagar), t: () => brl(r.totalPagar), st: { halign: 'right', fontStyle: 'bold', cellWidth: 68 } });
+    } else cols.push({ h: 'VALOR', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { halign: 'right', fontStyle: 'bold' } });
     const iAss = cols.length;
-    if (P.colAssinatura) cols.push({ h: 'ASSINATURA', v: () => '', st: { cellWidth: 140 } });
-    tabela(cols, r.colaboradores, r, P.colAssinatura ? { didDrawCell: (d) => { if (d.section === 'body' && d.column.index === iAss) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6); } } } : {});
+    if (P.colAssinatura) cols.push({ h: 'ASSINATURA', v: () => '', st: { cellWidth: r.totalConsumo > 0 || r.totalPendente > 0 ? 92 : 140 } });
+    const assinaturaLinha = (d) => { if (d.section === 'body' && d.column.index === iAss) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6); } };
+    const comConsumo = r.totalConsumo > 0 || r.totalPendente > 0;
+    tabela(cols, r.colaboradores, r, { ...(comConsumo ? { bodyStyles: { textColor: TINTA, fontSize: 9 }, headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 7 }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold', fontSize: 8.5 } } : {}), ...(P.colAssinatura ? { didDrawCell: assinaturaLinha } : {}) });
+    if (r.totalPendente > 0) {
+      const pend = r.colaboradores.filter((c) => c.pendente > 0).map((c) => `${c.nome} ${brl(c.pendente)}`).join('; ');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SEC);
+      const ln = doc.splitTextToSize(`Consumo maior que a gorjeta do período, não descontado aqui: ${pend}.`, W - 80);
+      doc.text(ln, 40, y - 16); y += ln.length * 11;
+    }
   }
   // Tabela dia a dia
   if (P.tabDias) {
