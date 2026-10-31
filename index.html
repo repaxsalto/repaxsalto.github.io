@@ -213,6 +213,11 @@ input[type=date] { font-variant-numeric: tabular-nums; }
 .t-equipe tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--linha); }
 .t-equipe td { padding: 0; border: 0; }
 .t-equipe td:first-child { grid-column: 1 / -1; }
+.nome-cpf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 170px); gap: 8px; }
+.add-col.form-eq { grid-template-columns: minmax(0, 1fr) minmax(0, 170px) minmax(0, 140px) minmax(0, 120px) auto; }
+input.cpf { font-variant-numeric: tabular-nums; }
+input.cpf.ruim { border-color: var(--perigo); }
+td small.cpf { display: block; font-size: 12px; color: var(--secundario); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .t-equipe input, .t-equipe select { min-height: 44px; width: 100%; }
 .periodo { display: grid; gap: 14px; margin-bottom: 24px; }
 .rp-linha { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
@@ -439,7 +444,10 @@ footer.rodape img { width: 150px; height: auto; display: block; }
   table.cats tfoot td:empty { display: none; }
   .add-col { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .add-col input { grid-column: 1 / -1; }
-  .add-col.com-tipo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .add-col.com-tipo, .add-col.form-eq { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .add-col.form-eq #eq-cpf { grid-column: 1 / -1; }
+  .add-col.form-eq .btn { grid-column: 1 / -1; }
+  .nome-cpf { grid-template-columns: minmax(0, 1fr); }
   .add-col.com-tipo .btn { grid-column: 1 / -1; }
   .grupos-chips, .grade-equipe { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .rp-txt { font-size: 22px; flex: 1; text-align: center; }
@@ -694,9 +702,11 @@ footer.rodape img { width: 150px; height: auto; display: block; }
       </header>
       <div class="painel listrado pilha" style="margin-bottom:28px">
         <h2>Cadastrar</h2>
-        <form id="form-eq" class="add-col com-tipo">
+        <form id="form-eq" class="add-col form-eq">
           <label class="sr" for="eq-nome">Nome</label>
           <input id="eq-nome" placeholder="Nome do colaborador" autocomplete="off">
+          <label class="sr" for="eq-cpf">CPF</label>
+          <input id="eq-cpf" class="cpf" inputmode="numeric" placeholder="CPF (opcional)" autocomplete="off" maxlength="14">
           <label class="sr" for="eq-cat">Categoria</label>
           <select id="eq-cat"></select>
           <label class="sr" for="eq-tipo">Fixo ou diarista</label>
@@ -797,6 +807,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
             </fieldset>
             <fieldset class="grupo-pdf"><legend>Tabela por colaborador</legend>
               <label class="chk" for="p-tc"><input type="checkbox" id="p-tc" data-pdf="tabColab">Mostrar a tabela</label>
+              <label class="chk sub" for="p-ccpf"><input type="checkbox" id="p-ccpf" data-pdf="colCpf" data-pai="tabColab">CPF</label>
               <label class="chk sub" for="p-ccat"><input type="checkbox" id="p-ccat" data-pdf="colCategoria" data-pai="tabColab">Categoria</label>
               <label class="chk sub" for="p-cdias"><input type="checkbox" id="p-cdias" data-pdf="colDias" data-pai="tabColab">Dias trabalhados</label>
               <label class="chk sub" for="p-cass"><input type="checkbox" id="p-cass" data-pdf="colAssinatura" data-pai="tabColab">Espaço para assinatura</label>
@@ -996,7 +1007,7 @@ const FBV = '10.12.2';
 const PDF_PADRAO = {
   titulo: 'Repasse da equipe', linhaTopo: 'Salto das Nuvens · Taxa de atendimento', logo: true, periodo: true,
   cardGerado: true, cardRetencoes: true, retSeparadas: true, cardPagar: true,
-  tabColab: true, colCategoria: true, colDias: true, colAssinatura: true,
+  tabColab: true, colCpf: true, colCategoria: true, colDias: true, colAssinatura: true,
   tabDias: true, diaGerado: true, diaRetido: true, diaDistribuido: true, diaPessoas: true,
   geradoEm: true, rodape: '',
 };
@@ -1086,8 +1097,18 @@ const ref = (col, id) => fb.fs.doc(fb.db, col, id);
 const limpo = (o) => JSON.parse(JSON.stringify(o)); // Firestore não aceita undefined
 const salvarLanc = (l) => gravar(() => fb.fs.setDoc(ref('lancamentos', l.id), limpo(l)));
 const excluirLanc = (id) => gravar(() => fb.fs.deleteDoc(ref('lancamentos', id)));
+// CPF: máscara 000.000.000-00 e conferência dos dígitos verificadores
+const cpfNum = (v) => String(v || '').replace(/\D/g, '').slice(0, 11);
+const cpfFmt = (v) => { const d = cpfNum(v); return d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2'); };
+function cpfValido(v) {
+  const d = cpfNum(v); if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  const dv = (n) => { let s = 0; for (let i = 0; i < n; i++) s += Number(d[i]) * (n + 1 - i); const r = (s * 10) % 11; return r === 10 ? 0 : r; };
+  return dv(9) === Number(d[9]) && dv(10) === Number(d[10]);
+}
+const cpfDe = (nome) => (D.equipe.find((m) => norm(m.nome) === norm(nome)) || {}).cpf || '';
+function mascaraCpf(el) { el.addEventListener('input', () => { el.value = cpfFmt(el.value); el.classList.remove('ruim'); }); }
 const tipoDe = (m) => (m && m.tipo === 'diarista' ? 'diarista' : 'fixo');
-const salvarMembro = (m) => gravar(() => fb.fs.setDoc(ref('equipe', m.id), { nome: m.nome, categoriaId: m.categoriaId, tipo: tipoDe(m) }));
+const salvarMembro = (m) => gravar(() => fb.fs.setDoc(ref('equipe', m.id), { nome: m.nome, categoriaId: m.categoriaId, tipo: tipoDe(m), cpf: cpfNum(m.cpf) }));
 const excluirMembro = (id) => gravar(() => fb.fs.deleteDoc(ref('equipe', id)));
 const salvarCfg = (c) => gravar(() => fb.fs.setDoc(ref('config', 'geral'), limpo(c)));
 
@@ -1409,8 +1430,9 @@ function periodoAtual() {
   return { de, ate, filtro: (d) => d >= de && d <= ate, rotulo: `${dataBR(de)} a ${dataBR(ate)}`, arquivo: `${de}-a-${ate}` };
 }
 function dadosRel() {
-  const p = periodoAtual(), l = D.lanc.filter((x) => p.filtro(x.data));
-  return { ...p, qtd: l.length, ...Calc.relatorio(l) };
+  const p = periodoAtual(), l = D.lanc.filter((x) => p.filtro(x.data)), rel = Calc.relatorio(l);
+  rel.colaboradores = rel.colaboradores.map((c) => ({ ...c, cpf: cpfFmt(cpfDe(c.nome)) }));
+  return { ...p, qtd: l.length, ...rel };
 }
 function renderPeriodo() {
   $$('#rp-modos [data-rmodo]').forEach((b) => b.classList.toggle('ativo', b.dataset.rmodo === RP.modo));
@@ -1452,7 +1474,7 @@ function renderRel() {
     <div class="rel-grade">
       <div class="painel listrado"><h2>A pagar por colaborador</h2><p class="muted" style="margin:-8px 0 12px">${esc(r.rotulo)} · ${r.dias.length} ${r.dias.length === 1 ? 'dia lançado' : 'dias lançados'}</p>
         <div class="rolagem"><table><thead><tr><th>Colaborador</th><th class="so-desk">Categoria</th><th class="num">Dias</th><th class="num">Recebe</th></tr></thead><tbody>
-        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b><small class="so-cel">${esc(c.categoria)}</small></td><td class="so-desk">${esc(c.categoria)}</td><td class="num">${c.dias}</td><td class="num"><span class="valor">${brl(c.valor)}</span></td></tr>`).join('')}
+        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b>${c.cpf ? `<small class="cpf">CPF ${esc(c.cpf)}</small>` : ''}<small class="so-cel">${esc(c.categoria)}</small></td><td class="so-desk">${esc(c.categoria)}</td><td class="num">${c.dias}</td><td class="num"><span class="valor">${brl(c.valor)}</span></td></tr>`).join('')}
         <tr class="total"><td>Total</td><td class="so-desk"></td><td></td><td class="num"><span class="valor">${brl(r.totalLiquido)}</span></td></tr></tbody></table></div></div>
       <div class="painel listrado"><h2>Dia a dia</h2>
         <div class="rolagem"><table><thead><tr><th>Data</th><th class="num">Gerado</th><th class="num">Retido</th><th class="num">Distribuído</th></tr></thead><tbody>
@@ -1488,7 +1510,7 @@ $('#rel-excel').addEventListener('click', async () => {
   try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'); } catch { return toast('Não consegui preparar a planilha. Tente de novo.', true); }
   const wb = XLSX.utils.book_new();
   const add = (nome, linhas) => { const ws = XLSX.utils.aoa_to_sheet(linhas); ws['!cols'] = linhas[0].map((_, i) => ({ wch: Math.max(...linhas.map((l) => String(l[i] ?? '').length)) + 2 })); XLSX.utils.book_append_sheet(wb, ws, nome); };
-  add('A pagar', [['Colaborador', 'Categoria', 'Dias', 'Valor a receber (R$)'], ...r.colaboradores.map((c) => [c.nome, c.categoria, c.dias, c.valor]), ['Total', '', '', r.totalLiquido]]);
+  add('A pagar', [['Colaborador', 'CPF', 'Categoria', 'Dias', 'Valor a receber (R$)'], ...r.colaboradores.map((c) => [c.nome, c.cpf || '', c.categoria, c.dias, c.valor]), ['Total', '', '', '', r.totalLiquido]]);
   add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${x.nome} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
   add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
@@ -1550,6 +1572,7 @@ async function gerarPDF(r, P) {
     titulo('VALOR A RECEBER POR COLABORADOR');
     y += 4; textoLivre();
     const cols = [{ h: 'COLABORADOR', v: (c) => c.nome }];
+    if (P.colCpf) cols.push({ h: 'CPF', v: (c) => c.cpf || '', st: { cellWidth: 92 } });
     if (P.colCategoria) cols.push({ h: 'CATEGORIA', v: (c) => c.categoria });
     if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: { halign: 'right' } });
     cols.push({ h: 'VALOR', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { halign: 'right', fontStyle: 'bold' } });
@@ -1593,12 +1616,20 @@ function renderEquipe() {
     const l = todos.filter((m) => tipoDe(m) === t), outro = t === 'fixo' ? 'diaristas' : 'fixos';
     $('#eq-n-' + t).textContent = l.length ? `(${l.length})` : '';
     $('#eq-vazio-' + t).hidden = l.length > 0;
-    $('#eq-' + t).innerHTML = l.map((m) => `<tr><td><input value="${esc(m.nome)}" data-nome="${esc(m.id)}" aria-label="Nome" style="width:100%"></td>
+    $('#eq-' + t).innerHTML = l.map((m) => `<tr><td class="nome-cpf"><input value="${esc(m.nome)}" data-nome="${esc(m.id)}" aria-label="Nome" style="width:100%">
+      <input class="cpf" value="${esc(cpfFmt(m.cpf))}" data-cpf="${esc(m.id)}" inputmode="numeric" maxlength="14" placeholder="CPF" aria-label="CPF de ${esc(m.nome)}"></td>
       <td><select data-cat="${esc(m.id)}" aria-label="Categoria de ${esc(m.nome)}">${opcoesCat(m.categoriaId)}</select></td>
       <td class="mover"><button class="btn mini" data-mover="${esc(m.id)}" title="Mover para ${outro}">→ ${outro.charAt(0).toUpperCase() + outro.slice(1)}</button></td>
       <td class="acoes"><button class="btn mini perigo" data-rmeq="${esc(m.id)}">Remover</button></td></tr>`).join('');
   });
   $$('#tela-equipe [data-nome]').forEach((i) => i.addEventListener('change', async () => { const m = D.equipe.find((x) => x.id === i.dataset.nome), n = i.value.trim(); if (m && n && n !== m.nome && (await salvarMembro({ ...m, nome: n }))) toast('Nome atualizado.'); }));
+  $$('#tela-equipe [data-cpf]').forEach((i) => { mascaraCpf(i); i.addEventListener('change', async () => {
+    const m = D.equipe.find((x) => x.id === i.dataset.cpf); if (!m || cpfNum(i.value) === cpfNum(m.cpf)) return;
+    if (cpfNum(i.value) && !cpfValido(i.value)) { i.classList.add('ruim'); return toast(`O CPF de ${m.nome} não é válido. Confira os números.`, true); }
+    const dono = cpfNum(i.value) && D.equipe.find((x) => x.id !== m.id && cpfNum(x.cpf) === cpfNum(i.value));
+    if (dono) { i.classList.add('ruim'); return toast(`Esse CPF já está cadastrado para ${dono.nome}.`, true); }
+    if (await salvarMembro({ ...m, cpf: i.value })) toast(cpfNum(i.value) ? `CPF de ${m.nome} salvo.` : `CPF de ${m.nome} apagado.`);
+  }); });
   $$('#tela-equipe [data-cat]').forEach((s) => s.addEventListener('change', async () => { const m = D.equipe.find((x) => x.id === s.dataset.cat); if (m && (await salvarMembro({ ...m, categoriaId: s.value }))) toast('Categoria atualizada.'); }));
   $$('#tela-equipe [data-mover]').forEach((b) => b.addEventListener('click', async () => {
     const m = D.equipe.find((x) => x.id === b.dataset.mover); if (!m) return;
@@ -1610,11 +1641,14 @@ function renderEquipe() {
     if (await confirmar('Remover da equipe?', `<b>${esc(m.nome)}</b> sai da lista de marcação rápida. Os dias já salvos continuam com o nome.`, 'Remover')) await excluirMembro(m.id);
   }));
 }
+mascaraCpf($('#eq-cpf'));
 $('#form-eq').addEventListener('submit', async (e) => {
   e.preventDefault(); const n = $('#eq-nome').value.trim().replace(/\s+/g, ' '); if (!n) return;
   if (D.equipe.some((m) => norm(m.nome) === norm(n))) return toast('Esse nome já está na equipe.', true);
-  const tipo = $('#eq-tipo').value;
-  if (await salvarMembro({ id: novoId(), nome: n, categoriaId: $('#eq-cat').value, tipo })) { $('#eq-nome').value = ''; $('#eq-nome').focus(); toast(`${n} cadastrado em ${tipo === 'fixo' ? 'Equipe fixa' : 'Diaristas'}.`); }
+  const tipo = $('#eq-tipo').value, cpf = $('#eq-cpf').value;
+  if (cpfNum(cpf) && !cpfValido(cpf)) { $('#eq-cpf').classList.add('ruim'); $('#eq-cpf').focus(); return toast('Esse CPF não é válido. Confira os números ou deixe em branco.', true); }
+  if (cpfNum(cpf) && D.equipe.some((m) => cpfNum(m.cpf) === cpfNum(cpf))) return toast('Esse CPF já está cadastrado para outra pessoa.', true);
+  if (await salvarMembro({ id: novoId(), nome: n, categoriaId: $('#eq-cat').value, tipo, cpf })) { $('#eq-nome').value = ''; $('#eq-cpf').value = ''; $('#eq-nome').focus(); toast(`${n} cadastrado em ${tipo === 'fixo' ? 'Equipe fixa' : 'Diaristas'}.`); }
 });
 
 /* ============================================================
@@ -1770,7 +1804,7 @@ $('#c-arq-backup').addEventListener('change', async () => {
   const { writeBatch } = fb.fs; const itens = [];
   const c = d.configuracoes;
   itens.push([ref('config', 'geral'), limpo(cfgParaGravar(normCfg(c)))]);
-  equipe.forEach((m) => m && m.nome && itens.push([ref('equipe', m.id || novoId()), { nome: m.nome, categoriaId: m.categoriaId || 'comum', tipo: tipoDe(m) }]));
+  equipe.forEach((m) => m && m.nome && itens.push([ref('equipe', m.id || novoId()), { nome: m.nome, categoriaId: m.categoriaId || 'comum', tipo: tipoDe(m), cpf: cpfNum(m.cpf) }]));
   lancs.forEach((l) => l && l.data && itens.push([ref('lancamentos', l.id || novoId()), limpo({ ...l, id: undefined })]));
   const ok = await gravar(async () => { for (let i = 0; i < itens.length; i += 400) { const b = writeBatch(fb.db); itens.slice(i, i + 400).forEach(([r, v]) => b.set(r, v)); await b.commit(); } });
   if (ok) { toast('Cópia restaurada.'); carregarConfigForm(); }
