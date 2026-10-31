@@ -1440,7 +1440,7 @@ $('#arquivo').addEventListener('change', async () => {
   const f = $('#arquivo').files[0]; $('#arquivo').value = ''; if (!f) return;
   const box = $('#import-res'); box.hidden = false; box.innerHTML = '<p class="muted">Lendo ' + esc(f.name) + '…</p>';
   try {
-    const texto = await lerArquivo(f), r = analisar(texto);
+    const r = analisar(await lerArquivo(f));
     F.arquivo = f.name;
     if (r.data) $('#l-data').value = r.data;
     if (!r.candidatos.length) { box.innerHTML = `<p><b>${esc(f.name)}</b>: não achei a taxa de atendimento neste arquivo. Digite o valor abaixo.</p>`; return; }
@@ -1457,35 +1457,75 @@ async function lerArquivo(f) {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
     const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const pdf = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise;
-    let t = '';
+    let t = ''; const itens = [];
     for (let p = 1; p <= pdf.numPages; p++) {
       const items = (await (await pdf.getPage(p)).getTextContent()).items;
       let y = null;
-      items.forEach((it) => { const yy = Math.round(it.transform[5]); if (y !== null && Math.abs(yy - y) > 2) t += '\n'; else if (y !== null) t += ' '; t += it.str; y = yy; });
+      items.forEach((it) => {
+        const yy = Math.round(it.transform[5]); if (y !== null && Math.abs(yy - y) > 2) t += '\n'; else if (y !== null) t += ' '; t += it.str; y = yy;
+        if (it.str.trim()) itens.push({ s: it.str.trim(), p, y: it.transform[5], dir: it.transform[4] + (it.width || 0) });
+      });
       t += '\n';
     }
-    return t;
+    return { texto: t, itens };
   }
   if (['xlsx', 'xls', 'csv'].includes(ext)) {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
     const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' }); let t = '';
     wb.SheetNames.forEach((n) => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: false, defval: '' }).forEach((r) => (t += r.join(' | ') + '\n')));
-    return t;
+    return { texto: t, itens: null };
   }
-  return await f.text();
+  return { texto: await f.text(), itens: null };
 }
-function analisar(texto) {
+// Relatório "Comissão por taxa de atendimento" (sistema Stor): o valor certo é a coluna
+// "Comissão Com Desc." da linha TOTAL. No PDF as colunas saem fora de ordem no texto,
+// então a coluna é achada pela posição: o número da linha TOTAL alinhado (pela direita)
+// com o título "Com Desc." / "Sem Desc.".
+const reDinheiro = /^-?R?\$?\s*\d{1,3}(?:\.\d{3})*,\d{2}$|^-?\d+,\d{2}$/;
+function comissaoPDF(itens) {
+  if (!itens || !itens.length) return [];
+  const coluna = (re) => itens.find((i) => re.test(i.s));
+  const total = [...itens].reverse().find((i) => /^TOTAL\b/i.test(i.s));
+  if (!total) return [];
+  const linha = itens.filter((i) => i.p === total.p && Math.abs(i.y - total.y) <= 4 && reDinheiro.test(i.s));
+  const naColuna = (h) => { if (!h) return null; let m = null; linha.forEach((i) => { const d = Math.abs(i.dir - h.dir); if (d <= 15 && (!m || d < m.d)) m = { d, v: Calc.parseValor(i.s) }; }); return m ? m.v : null; };
+  const com = naColuna(coluna(/^Com\s*Desc\.?$/i)), sem = naColuna(coluna(/^Sem\s*Desc\.?$/i));
+  const out = [];
+  if (com != null) out.push({ linha: 'Comissão com desconto · linha TOTAL do relatório', valor: com });
+  if (sem != null && sem !== com) out.push({ linha: 'Comissão sem desconto · linha TOTAL do relatório', valor: sem });
+  return out;
+}
+// Mesmo relatório exportado em Excel/CSV: as colunas vêm em ordem e "Com Desc." é a penúltima.
+function comissaoTexto(texto) {
+  if (!/comiss[aã]o/i.test(texto) || !/com\s*desc/i.test(texto)) return [];
+  const l = texto.split(/\r?\n/).reverse().find((x) => /^\W*TOTAL\b/i.test(x.trim()));
+  const v = l ? (l.match(/-?\d{1,3}(?:\.\d{3})*,\d{2}|-?\d+,\d{2}/g) || []) : [];
+  if (v.length < 2) return [];
+  const com = Calc.parseValor(v[v.length - 2]), sem = Calc.parseValor(v[v.length - 1]);
+  const out = [{ linha: 'Comissão com desconto · linha TOTAL do relatório', valor: com }];
+  if (sem !== com) out.push({ linha: 'Comissão sem desconto · linha TOTAL do relatório', valor: sem });
+  return out;
+}
+function dataDoTexto(texto) {
+  const m = texto.match(/DATA\s*INICIAL[^\d]{0,30}(\d{2})\/(\d{2})\/(\d{4})/i)
+    || texto.replace(/emitido\s+em\s+\d{2}\/\d{2}\/\d{4}/gi, '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+function analisar(lido) {
+  const texto = typeof lido === 'string' ? lido : lido.texto, itens = typeof lido === 'string' ? null : lido.itens;
+  const data = dataDoTexto(texto);
+  const comissao = itens ? comissaoPDF(itens) : comissaoTexto(texto);
+  if (comissao.length) return { candidatos: comissao, data };
   const reV = /(?:R\$\s*)?-?\d{1,3}(?:\.\d{3})*,\d{2}|(?:R\$\s*)?-?\d+[.,]\d{2}(?!\d)/g;
   const reP = /(taxa\s*(de\s*)?(servi[cç]o|atendimento)|servi[cç]o|atendimento|gorjeta|10\s*%)/i;
   const linhas = texto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean), cand = [];
   linhas.forEach((l, i) => {
-    if (!reP.test(l)) return;
+    if (!reP.test(l) || /^aten[cç][aã]o\b/i.test(l)) return;
     let v = l.match(reV) || []; if (!v.length && linhas[i + 1]) v = linhas[i + 1].match(reV) || [];
     v.forEach((x) => { const n = Calc.parseValor(x); if (n > 0) cand.push({ linha: l.slice(0, 120), valor: n, pts: (/total/i.test(l) ? 2 : 0) + (/taxa|servi[cç]o|atendimento/i.test(l) ? 1 : 0) }); });
   });
   cand.sort((a, b) => b.pts - a.pts || b.valor - a.valor);
-  const m = texto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-  return { candidatos: cand.filter((c, i, a) => a.findIndex((x) => x.valor === c.valor && x.linha === c.linha) === i).slice(0, 8), data: m ? `${m[3]}-${m[2]}-${m[1]}` : null };
+  return { candidatos: cand.filter((c, i, a) => a.findIndex((x) => x.valor === c.valor && x.linha === c.linha) === i).slice(0, 8), data };
 }
 
 /* ============================================================
@@ -1506,25 +1546,25 @@ function mexeu(d = diaM()) { if (d) d.salvo = false; guardarM(); }
 async function importarM(files) {
   files = [...files]; if (!files.length) return;
   const st = $('#mm-lendo'); st.hidden = false;
-  const ja = files.filter((f) => M.dias.some((d) => d.arquivo === f.name));
-  files = files.filter((f) => !ja.includes(f));
-  if (ja.length) toast(ja.length > 1 ? `${ja.length} arquivos já estavam na lista e foram ignorados.` : `${ja[0].name} já estava na lista.`, true);
-  if (!files.length) { st.hidden = true; return; }
-  let n = 0, semValor = 0; const novos = [];
+  let n = 0, semValor = 0, relidos = 0; const novos = [];
   for (const f of files) {
     st.textContent = `Lendo ${++n} de ${files.length}: ${f.name}…`;
-    const d = { id: novoId(), arquivo: f.name, data: '', valor: 0, cands: [], equipe: [], obs: '', salvo: false };
+    const velho = M.dias.find((x) => x.arquivo === f.name);
+    const d = velho || { id: novoId(), arquivo: f.name, data: '', valor: 0, cands: [], equipe: [], obs: '', salvo: false };
+    const antes = JSON.stringify([d.data, d.valor]);
     try {
       const r = analisar(await lerArquivo(f));
-      d.data = r.data || ''; d.cands = r.candidatos.map((c) => ({ linha: c.linha, valor: c.valor }));
+      d.erro = false; d.data = r.data || d.data || ''; d.cands = r.candidatos.map((c) => ({ linha: c.linha, valor: c.valor }));
       d.valor = d.cands.length ? d.cands[0].valor : 0;
     } catch { d.erro = true; }
     if (!d.valor) semValor++;
-    M.dias.push(d); novos.push(d);
+    if (velho) { relidos++; if (JSON.stringify([d.data, d.valor]) !== antes) d.salvo = false; }
+    else M.dias.push(d);
+    novos.push(d);
   }
   ordenarM(); M.atual = Math.min(...novos.map((d) => M.dias.indexOf(d))); guardarM();
   st.hidden = true;
-  if (!ja.length) toast(`${files.length} ${files.length > 1 ? 'relatórios lidos' : 'relatório lido'}.` + (semValor ? ` Em ${semValor} não achei a taxa; digite o valor.` : ' Confira o valor de cada dia.'), semValor > 0);
+  toast(`${files.length} ${files.length > 1 ? 'relatórios lidos' : 'relatório lido'}` + (relidos ? ` (${relidos} já ${relidos > 1 ? 'estavam' : 'estava'} na lista: valor atualizado, equipe mantida)` : '') + '.' + (semValor ? ` Em ${semValor} não achei a taxa; digite o valor.` : ' Confira o valor de cada dia.'), semValor > 0);
   renderMensal();
 }
 $('#mm-btn').addEventListener('click', () => $('#mm-arquivos').click());
