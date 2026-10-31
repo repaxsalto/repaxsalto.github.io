@@ -245,6 +245,12 @@ td small.cpf { display: block; white-space: nowrap; font-size: 12px; color: var(
 td small.desc { display: block; font-size: 12px; color: var(--secundario); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pendente { color: var(--perigo); }
 .resumo .tag.cat { white-space: normal; text-align: left; }
+.cat-dias { display: inline-block; white-space: nowrap; margin: 0 10px 2px 0; }
+.cat-dias b { font-variant-numeric: tabular-nums; color: var(--ferrugem-txt); margin-left: 2px; }
+.desc-in { display: inline-flex; align-items: center; background: var(--papel); border: 2px solid var(--tracejado); min-height: 36px; width: 104px; }
+.desc-in span { font-size: 11px; font-weight: 800; color: var(--secundario); padding-left: 7px; }
+.desc-in input { border: 0; background: transparent; min-height: 32px; padding: 2px 7px 2px 4px; width: 100%; min-width: 0; text-align: right; font-variant-numeric: tabular-nums; box-shadow: none !important; }
+.desc-in:focus-within { border-color: var(--ferrugem-borda); }
 .cats-dia { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
 .cats-dia > select { flex: 1 1 120px; min-width: 0; }
 .cats-dia .extra { display: flex; align-items: center; gap: 4px; flex: 1 1 140px; min-width: 0; }
@@ -333,7 +339,7 @@ tr.detalhe > td { background: var(--celula); padding: 4px 16px 16px 30px; }
 .kpi b { display: block; font-family: var(--f-titulo); font-weight: 800; font-size: clamp(18px, 14cqi, 40px); line-height: 1.05; margin-top: 8px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: clip; }
 .kpi.destaque { background: var(--ferrugem); border-color: var(--dourado); color: var(--botao-txt); }
 .kpi.destaque span { color: inherit; opacity: .85; }
-.rel-grade { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.rel-grade { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: start; }
 
 /* ===== Configurações ===== */
 .grade-config { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; align-items: start; }
@@ -391,6 +397,16 @@ footer.rodape img { width: 150px; height: auto; display: block; }
 
 @media (max-width: 1080px) {
   .grade-lanc, .rel-grade { grid-template-columns: minmax(0, 1fr); }
+  .t-pagar thead { display: none; }
+  .t-pagar, .t-pagar tbody { display: block; }
+  .t-pagar tr { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--linha); }
+  .t-pagar td { padding: 0; border: 0; }
+  .t-pagar td:first-child { grid-column: 1 / -1; }
+  .t-pagar td.so-desk { display: none; }
+  .t-pagar .c-dias::before { content: "Dias "; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--secundario); text-transform: uppercase; }
+  .t-pagar .c-dias { text-align: left; white-space: nowrap; }
+  .t-pagar .c-desc { text-align: left; }
+  .t-pagar .desc-in { width: 100%; max-width: 130px; }
   .resumo { position: static; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -945,7 +961,9 @@ footer.rodape img { width: 150px; height: auto; display: block; }
               <label class="chk" for="p-tc"><input type="checkbox" id="p-tc" data-pdf="tabColab">Mostrar a tabela</label>
               <label class="chk sub" for="p-ccpf"><input type="checkbox" id="p-ccpf" data-pdf="colCpf" data-pai="tabColab">CPF</label>
               <label class="chk sub" for="p-ccat"><input type="checkbox" id="p-ccat" data-pdf="colCategoria" data-pai="tabColab">Categoria</label>
+              <label class="chk sub" for="p-ccatd"><input type="checkbox" id="p-ccatd" data-pdf="colCatDias" data-pai="tabColab">Dias em cada categoria (junto da categoria)</label>
               <label class="chk sub" for="p-cdias"><input type="checkbox" id="p-cdias" data-pdf="colDias" data-pai="tabColab">Dias trabalhados</label>
+              <label class="chk sub" for="p-cdesc"><input type="checkbox" id="p-cdesc" data-pdf="colDescontos" data-pai="tabColab">Descontos</label>
               <label class="chk sub" for="p-cass"><input type="checkbox" id="p-cass" data-pdf="colAssinatura" data-pai="tabColab">Espaço para assinatura</label>
             </fieldset>
             <fieldset class="grupo-pdf"><legend>Tabela dia a dia</legend>
@@ -1070,8 +1088,8 @@ const Calc = (() => {
       dias.push({ data: x.data, valorBruto: x.valorBruto, valorRetido: x.valorRetido, valorLiquido: x.valorLiquido, pessoas: x.colaboradores.length, retencoes: rd });
       x.colaboradores.forEach((c) => {
         const k = c.nome.trim().toLocaleLowerCase('pt-BR');
-        p[k] = p[k] || { nome: c.nome.trim(), cats: new Set(), dias: 0, c: 0, cons: 0 };
-        p[k].dias++; p[k].c += toC(c.valor); p[k].cons += toC(c.consumo); if (c.categoria) String(c.categoria).split(' + ').forEach((n) => p[k].cats.add(n));
+        p[k] = p[k] || { nome: c.nome.trim(), cats: new Map(), dias: 0, c: 0, cons: 0 };
+        p[k].dias++; p[k].c += toC(c.valor); p[k].cons += toC(c.consumo); if (c.categoria) [...new Set(String(c.categoria).split(' + '))].forEach((n) => p[k].cats.set(n, (p[k].cats.get(n) || 0) + 1));
       });
     });
     return {
@@ -1081,7 +1099,7 @@ const Calc = (() => {
       totalPendente: fromC(Object.values(p).reduce((a, x) => a + Math.max(0, x.cons - x.c), 0)),
       retencoes: [...rt.values()].map((o) => ({ id: o.id, nome: o.nome, valor: fromC(o.c) })),
       // consumo é descontado da gorjeta do próprio colaborador, nunca abaixo de zero; o que sobrar fica pendente
-      colaboradores: Object.values(p).map((x) => { const desc = Math.min(x.cons, x.c); return { nome: x.nome, categoria: [...x.cats].join(', '), dias: x.dias, valor: fromC(x.c), consumo: fromC(x.cons), desconto: fromC(desc), pagar: fromC(x.c - desc), pendente: fromC(x.cons - desc) }; }).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR')),
+      colaboradores: Object.values(p).map((x) => { const desc = Math.min(x.cons, x.c); return { nome: x.nome, categoria: [...x.cats.keys()].join(', '), categoriasDias: [...x.cats].map(([nome, dias]) => ({ nome, dias })), dias: x.dias, valor: fromC(x.c), consumo: fromC(x.cons), desconto: fromC(desc), pagar: fromC(x.c - desc), pendente: fromC(x.cons - desc) }; }).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR')),
     };
   }
   return { calcular, relatorio, parseValor, retDe, catsDe };
@@ -1149,7 +1167,7 @@ const FBV = '10.12.2';
 const PDF_PADRAO = {
   titulo: 'Repasse da equipe', linhaTopo: 'Salto das Nuvens · Taxa de atendimento', logo: true, periodo: true,
   cardGerado: true, cardRetencoes: true, retSeparadas: true, cardPagar: true,
-  tabColab: true, colCpf: true, colCategoria: true, colDias: true, colAssinatura: true,
+  tabColab: true, colCpf: true, colCategoria: true, colCatDias: true, colDias: true, colDescontos: true, colAssinatura: true,
   tabDias: true, diaGerado: true, diaRetido: true, diaDistribuido: true, diaPessoas: true,
   geradoEm: true, rodape: '',
 };
@@ -1182,7 +1200,7 @@ function cfgParaGravar(c) {
 }
 const pesoDe = (k) => { const p = Number(k && k.peso); return Number.isFinite(p) && p > 0 ? p : 1; };
 const pctBR = (n) => String(Math.round((Number(n) || 0) * 100) / 100).replace('.', ',');
-const D = { cfg: normCfg(), equipe: [], lanc: [], pronto: false };
+const D = { cfg: normCfg(), equipe: [], lanc: [], pronto: false, descontos: {} };
 const cfg = () => D.cfg;
 let fb = null, assinaturas = [];
 
@@ -1205,6 +1223,7 @@ async function iniciarFirebase() {
 function assinar() {
   const { doc, collection, onSnapshot } = fb.fs;
   const falha = (e) => toast(e && e.code === 'permission-denied' ? 'Sem permissão para ler os dados. Bloqueie e entre de novo.' : 'Não consegui ler os dados agora. Confira a internet.', true);
+  assinaturas.push(onSnapshot(doc(fb.db, 'config', 'descontos'), (s) => { D.descontos = (s.exists() && s.data()) || {}; if (abaAtual === 'relatorio' && !(document.activeElement && document.activeElement.dataset && 'desc' in document.activeElement.dataset)) renderRel(); }, falha));
   assinaturas.push(onSnapshot(doc(fb.db, 'config', 'geral'), (s) => { D.cfg = normCfg(s.exists() ? s.data() : null); if (abaAtual === 'config' && !sujo) carregarConfigForm(); renderTudo(); }, falha));
   assinaturas.push(onSnapshot(collection(fb.db, 'equipe'), (s) => { D.equipe = s.docs.map((d) => ({ ...d.data(), id: d.id })); renderTudo(); }, falha));
   assinaturas.push(onSnapshot(collection(fb.db, 'lancamentos'), (s) => { D.lanc = s.docs.map((d) => ({ ...d.data(), id: d.id })); D.pronto = true; renderTudo(); }, falha));
@@ -1837,10 +1856,28 @@ function periodoAtual() {
   const de = RP.semIni, ate = somaDias(de, 6);
   return { de, ate, filtro: (d) => d >= de && d <= ate, rotulo: `${dataBR(de)} a ${dataBR(ate)}`, arquivo: `${de}-a-${ate}` };
 }
+// Descontos do relatório: valor por colaborador, guardado para cada período (config/descontos)
+const chaveDesc = (p) => (RP.modo === 'dias' ? 'dias_' + [...RP.dias].sort().join('_') : `${p.de}_${p.ate}`).replace(/[^0-9a-z_]/gi, '_');
+const chaveNome = (n) => norm(n).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_');
+const catDiasTxt = (c, sep = ', ') => (c.categoriasDias || []).map((x) => `${x.nome} (${x.dias} ${x.dias === 1 ? 'dia' : 'dias'})`).join(sep) || c.categoria || '';
 function dadosRel() {
   const p = periodoAtual(), l = D.lanc.filter((x) => p.filtro(x.data)), rel = Calc.relatorio(l);
-  rel.colaboradores = rel.colaboradores.map((c) => ({ ...c, cpf: cpfFmt(cpfDe(c.nome)) }));
-  return { ...p, qtd: l.length, ...rel };
+  const chave = chaveDesc(p), tab = (D.descontos || {})[chave] || {}, ct = (v) => Math.round((Number(v) || 0) * 100);
+  let ap = 0, pend = 0;
+  rel.colaboradores = rel.colaboradores.map((c) => {
+    const des = ct(tab[chaveNome(c.nome)]), usa = Math.min(des, ct(c.pagar));
+    ap += usa; pend += des - usa;
+    return { ...c, cpf: cpfFmt(cpfDe(c.nome)), descontos: des / 100, descAplicado: usa / 100, pagar: (ct(c.pagar) - usa) / 100, pendenteDesc: (des - usa) / 100 };
+  });
+  rel.totalDescontos = ap / 100; rel.totalPendenteDesc = pend / 100; rel.totalPagar = (ct(rel.totalPagar) - ap) / 100;
+  return { ...p, qtd: l.length, chaveDesc: chave, ...rel };
+}
+async function salvarDesconto(chave, nome, valor) {
+  const tudo = JSON.parse(JSON.stringify(D.descontos || {})), t = tudo[chave] || {}, k = chaveNome(nome);
+  if (valor > 0) t[k] = Math.round(valor * 100) / 100; else delete t[k];
+  if (Object.keys(t).length) tudo[chave] = t; else delete tudo[chave];
+  D.descontos = tudo;
+  return gravar(() => fb.fs.setDoc(ref('config', 'descontos'), tudo));
 }
 function renderPeriodo() {
   $$('#rp-modos [data-rmodo]').forEach((b) => b.classList.toggle('ativo', b.dataset.rmodo === RP.modo));
@@ -1878,27 +1915,41 @@ function renderRel() {
       <div class="kpi"><span>Total gerado</span><b>${brl(r.totalBruto)}</b></div>
       ${retsComValor(r).map((x) => `<div class="kpi"><span>${esc(x.nome)}</span><b>${brl(x.valor)}</b></div>`).join('')}
       ${r.totalConsumo > 0 ? `<div class="kpi"><span>Consumo descontado</span><b>${brl(r.totalConsumo)}</b></div>` : ''}
+      ${r.totalDescontos > 0 ? `<div class="kpi"><span>Descontos</span><b>${brl(r.totalDescontos)}</b></div>` : ''}
       <div class="kpi destaque"><span>Total a pagar</span><b>${brl(r.totalPagar)}</b></div>
     </div>
     <div class="rel-grade">
       <div class="painel listrado"><h2>A pagar por colaborador</h2><p class="muted" style="margin:-8px 0 12px">${esc(r.rotulo)} · ${r.dias.length} ${r.dias.length === 1 ? 'dia lançado' : 'dias lançados'}</p>
-        <div class="rolagem"><table><thead><tr><th>Colaborador</th><th class="so-desk">Categoria</th><th class="num">Dias</th><th class="num">Recebe</th></tr></thead><tbody>
-        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b>${c.cpf ? `<small class="cpf">CPF ${esc(c.cpf)}</small>` : ''}<small class="so-cel">${esc(c.categoria)}</small></td><td class="so-desk">${esc(c.categoria)}</td><td class="num">${c.dias}</td><td class="num"><span class="valor">${brl(c.pagar)}</span>${c.consumo > 0 ? `<small class="desc">gorjeta ${brl(c.valor)}</small><small class="desc">consumo − ${brl(c.desconto)}</small>` : ''}${c.pendente > 0 ? `<small class="desc pendente">consumo restante ${brl(c.pendente)}</small>` : ''}</td></tr>`).join('')}
-        <tr class="total"><td>Total</td><td class="so-desk"></td><td></td><td class="num"><span class="valor">${brl(r.totalPagar)}</span></td></tr></tbody></table></div>
+        <div class="rolagem"><table class="t-pagar"><thead><tr><th>Colaborador</th><th class="so-desk">Categoria · dias</th><th class="num">Dias</th><th class="num">Descontos</th><th class="num">Recebe</th></tr></thead><tbody>
+        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b>${c.cpf ? `<small class="cpf">CPF ${esc(c.cpf)}</small>` : ''}<small class="so-cel">${esc(catDiasTxt(c))}</small></td><td class="so-desk">${(c.categoriasDias || []).map((x) => `<span class="cat-dias">${esc(x.nome)} <b>${x.dias}</b></span>`).join('') || esc(c.categoria)}</td><td class="num c-dias">${c.dias}</td>
+          <td class="num c-desc"><label class="desc-in"><span>R$</span><input data-desc="${esc(c.nome)}" inputmode="decimal" placeholder="0,00" value="${c.descontos > 0 ? num2(c.descontos) : ''}" aria-label="Descontos de ${esc(c.nome)}"></label></td>
+          <td class="num"><span class="valor">${brl(c.pagar)}</span>${c.consumo > 0 || c.descAplicado > 0 ? `<small class="desc">gorjeta ${brl(c.valor)}</small>` : ''}${c.consumo > 0 ? `<small class="desc">consumo − ${brl(c.desconto)}</small>` : ''}${c.descAplicado > 0 ? `<small class="desc">descontos − ${brl(c.descAplicado)}</small>` : ''}${c.pendente > 0 ? `<small class="desc pendente">consumo restante ${brl(c.pendente)}</small>` : ''}${c.pendenteDesc > 0 ? `<small class="desc pendente">desconto restante ${brl(c.pendenteDesc)}</small>` : ''}</td></tr>`).join('')}
+        <tr class="total"><td>Total</td><td class="so-desk"></td><td></td><td class="num c-desc">${r.totalDescontos > 0 ? '− ' + brl(r.totalDescontos) : brl(0)}</td><td class="num"><span class="valor">${brl(r.totalPagar)}</span></td></tr></tbody></table></div>
+        <p class="muted" style="font-size:13px;margin:10px 0 0">Descontos valem só para este período (${esc(r.rotulo)}). O valor sai da gorjeta da pessoa, depois do consumo.</p>
+        ${r.totalPendenteDesc > 0 ? `<p class="aviso" style="margin-top:12px">Há descontos maiores que o valor a receber (${brl(r.totalPendenteDesc)}). Essa parte não foi descontada aqui.</p>` : ''}
         ${r.totalPendente > 0 ? `<p class="aviso" style="margin-top:12px">Há consumo maior que a gorjeta do período (${brl(r.totalPendente)}). Esse valor não foi descontado; desconte no próximo pagamento ou na folha.</p>` : ''}</div>
       <div class="painel listrado"><h2>Dia a dia</h2>
         <div class="rolagem"><table><thead><tr><th>Data</th><th class="num">Gerado</th><th class="num">Retido</th><th class="num">Distribuído</th></tr></thead><tbody>
         ${r.dias.map((d) => `<tr><td>${dataBR(d.data)} <small class="muted">${diaSem(d.data).slice(0, 3)}</small></td><td class="num">${brl(d.valorBruto)}</td><td class="num">${brl(d.valorRetido)}</td><td class="num">${brl(d.valorLiquido)}</td></tr>`).join('')}
         <tr class="total"><td>Total</td><td class="num">${brl(r.totalBruto)}</td><td class="num">${brl(r.totalRetido)}</td><td class="num">${brl(r.totalLiquido)}</td></tr></tbody></table></div></div>
     </div>`;
+  $$('#rel-conteudo [data-desc]').forEach((i) => {
+    i.addEventListener('blur', async () => {
+      const v = Math.max(0, Calc.parseValor(i.value)), atual = (((D.descontos || {})[r.chaveDesc] || {})[chaveNome(i.dataset.desc)]) || 0;
+      i.value = v ? num2(v) : '';
+      if (Math.round(v * 100) !== Math.round(atual * 100)) { if (await salvarDesconto(r.chaveDesc, i.dataset.desc, v)) toast(`Desconto de ${i.dataset.desc} salvo.`); }
+      setTimeout(() => { if (!(document.activeElement && 'desc' in (document.activeElement.dataset || {}))) renderRel(); }, 0);
+    });
+    i.addEventListener('keydown', (e) => { if (e.key === 'Enter') i.blur(); });
+  });
 }
 ['#rel-de', '#rel-ate'].forEach((s) => $(s).addEventListener('change', renderRel));
 function semanaPadrao() { const dow = new Date().getDay(); return semana(dow === 1 ? -1 : 0); } // segunda abre a semana que acabou
 
 function textoRel(r) {
-  return `*Taxa de atendimento · ${r.rotulo}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.pagar)}` + (c.consumo > 0 ? ` (gorjeta ${brl(c.valor)} − consumo ${brl(c.desconto)})` : '')).join('\n') +
+  return `*Taxa de atendimento · ${r.rotulo}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.pagar)}` + (c.consumo > 0 || c.descAplicado > 0 ? ` (gorjeta ${brl(c.valor)}${c.consumo > 0 ? ` − consumo ${brl(c.desconto)}` : ''}${c.descAplicado > 0 ? ` − descontos ${brl(c.descAplicado)}` : ''})` : '')).join('\n') +
     `\n\nTotal gerado: ${brl(r.totalBruto)}\n` + r.retencoes.filter((x) => x.valor > 0).map((x) => `${x.nome}: ${brl(x.valor)}\n`).join('') +
-    (r.totalConsumo > 0 ? `Consumo descontado: ${brl(r.totalConsumo)}\n` : '') + `*Total a pagar: ${brl(r.totalPagar)}*`;
+    (r.totalConsumo > 0 ? `Consumo descontado: ${brl(r.totalConsumo)}\n` : '') + (r.totalDescontos > 0 ? `Descontos: ${brl(r.totalDescontos)}\n` : '') + `*Total a pagar: ${brl(r.totalPagar)}*`;
 }
 $('#rel-copiar').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
@@ -1920,7 +1971,7 @@ $('#rel-excel').addEventListener('click', async () => {
   try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'); } catch { return toast('Não consegui preparar a planilha. Tente de novo.', true); }
   const wb = XLSX.utils.book_new();
   const add = (nome, linhas) => { const ws = XLSX.utils.aoa_to_sheet(linhas); ws['!cols'] = linhas[0].map((_, i) => ({ wch: Math.max(...linhas.map((l) => String(l[i] ?? '').length)) + 2 })); XLSX.utils.book_append_sheet(wb, ws, nome); };
-  add('A pagar', [['Colaborador', 'CPF', 'Categoria', 'Dias', 'Gorjeta (R$)', 'Consumo descontado (R$)', 'A receber (R$)', 'Consumo restante (R$)'], ...r.colaboradores.map((c) => [c.nome, c.cpf || '', c.categoria, c.dias, c.valor, c.desconto, c.pagar, c.pendente]), ['Total', '', '', '', r.totalLiquido, r.totalConsumo, r.totalPagar, r.totalPendente]]);
+  add('A pagar', [['Colaborador', 'CPF', 'Categoria (dias)', 'Dias', 'Gorjeta (R$)', 'Consumo descontado (R$)', 'Descontos (R$)', 'A receber (R$)', 'Consumo restante (R$)', 'Desconto restante (R$)'], ...r.colaboradores.map((c) => [c.nome, c.cpf || '', catDiasTxt(c), c.dias, c.valor, c.desconto, c.descAplicado, c.pagar, c.pendente, c.pendenteDesc]), ['Total', '', '', '', r.totalLiquido, r.totalConsumo, r.totalDescontos, r.totalPagar, r.totalPendente, r.totalPendenteDesc]]);
   add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${x.nome} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
   add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
@@ -1930,7 +1981,10 @@ async function gerarPDF(r, P) {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
   P = { ...PDF_PADRAO, ...(P || {}) };
-  const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const comConsumo = r.totalConsumo > 0 || r.totalPendente > 0, comDesc = !!P.colDescontos;
+  const nCols = 1 + !!P.colCpf + !!P.colCategoria + !!P.colDias + (comConsumo || comDesc ? 2 + comConsumo + comDesc : 1) + !!P.colAssinatura;
+  const deitado = P.tabColab && nCols >= 8; // muitas colunas: página deitada para nada quebrar
+  const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', orientation: deitado ? 'landscape' : 'portrait' }), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
   const TERRA = [36, 30, 25], FERR = [169, 68, 44], DOUR = [230, 164, 61], CREME = [255, 245, 229], TINTA = [56, 33, 24], SEC = [95, 73, 55];
   // Cabeçalho
   doc.setFillColor(...TERRA); doc.rect(0, 0, W, 92, 'F'); doc.setFillColor(...FERR); doc.rect(0, 0, W, 6, 'F');
@@ -1948,6 +2002,7 @@ async function gerarPDF(r, P) {
     else kp.push(['TOTAL RETIDO', r.totalRetido, false]);
   }
   if (P.cardPagar && r.totalConsumo > 0) kp.push(['CONSUMO DESCONTADO', r.totalConsumo, false]);
+  if (P.cardPagar && r.totalDescontos > 0) kp.push(['DESCONTOS', r.totalDescontos, false]);
   if (P.cardPagar) kp.push(['TOTAL A PAGAR', r.totalPagar ?? r.totalLiquido, true]);
   const porLinha = Math.ceil(kp.length / Math.ceil(kp.length / 4 || 1));
   for (let i = 0; i < kp.length; i += porLinha) {
@@ -1963,10 +2018,18 @@ async function gerarPDF(r, P) {
     y += 72;
   }
   if (kp.length) y += 8;
-  const est = { headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { textColor: TINTA, fontSize: 10 }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' }, margin: { left: 40, right: 40 } };
+  const est = { headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { textColor: TINTA, fontSize: 10 }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' }, margin: { left: 40, right: 40 }, rowPageBreak: 'avoid' };
   const titulo = (t) => { if (y > H - 120) { doc.addPage(); y = 50; } doc.setTextColor(...FERR); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(t, 40, y); y += 10; };
   const tabela = (cols, linhas, totais, extra = {}) => {
-    const st = {}; cols.forEach((c, i) => { if (c.st) st[i] = c.st; });
+    const st = {}; cols.forEach((c, i) => { if (c.st) st[i] = { ...c.st }; });
+    // colunas "wrap" e de texto curto: largura medida para nunca quebrar número, CPF ou total
+    const fsB = (extra.bodyStyles || est.bodyStyles).fontSize, fsF = (extra.footStyles || {}).fontSize || 10, fsH = (extra.headStyles || est.headStyles).fontSize;
+    const mede = (t, fs, bold) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(fs); return Math.max(0, ...String(t).split('\n').map((x) => doc.getTextWidth(x))); };
+    cols.forEach((c, i) => {
+      if (!c.st || c.st.cellWidth !== 'wrap') return;
+      const w = Math.max(mede(c.h, fsH, true), ...linhas.map((l) => mede(c.v(l), fsB, c.st.fontStyle === 'bold')), c.t ? mede(c.t(totais), fsF, true) : 0);
+      st[i].cellWidth = Math.ceil(w) + 12;
+    });
     doc.autoTable({ ...est, ...extra, startY: y, head: [cols.map((c) => c.h)], body: linhas.map((l) => cols.map((c) => c.v(l))), foot: [cols.map((c, i) => (i === 0 ? 'TOTAL' : c.t ? c.t(totais) : ''))], columnStyles: st,
       didParseCell: (d) => { const a = cols[d.column.index]?.st?.halign; if (a && d.section !== 'body') d.cell.styles.halign = a; } });
     y = doc.lastAutoTable.finalY + 28;
@@ -1982,20 +2045,27 @@ async function gerarPDF(r, P) {
   if (P.tabColab) {
     titulo('VALOR A RECEBER POR COLABORADOR');
     y += 4; textoLivre();
-    const cols = [{ h: 'COLABORADOR', v: (c) => c.nome }];
-    if (P.colCpf) cols.push({ h: 'CPF', v: (c) => c.cpf || '', st: { cellWidth: 74 } });
-    if (P.colCategoria) cols.push({ h: 'CATEGORIA', v: (c) => c.categoria });
-    if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: { halign: 'right', cellWidth: 34 } });
-    if (r.totalConsumo > 0 || r.totalPendente > 0) {
-      cols.push({ h: 'GORJETA', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { halign: 'right', cellWidth: 68 } });
-      cols.push({ h: 'CONSUMO', v: (c) => (c.desconto > 0 ? '- ' + brl(c.desconto) : '-'), t: () => '- ' + brl(r.totalConsumo), st: { halign: 'right', cellWidth: 68 } });
-      cols.push({ h: 'A RECEBER', v: (c) => brl(c.pagar), t: () => brl(r.totalPagar), st: { halign: 'right', fontStyle: 'bold', cellWidth: 68 } });
-    } else cols.push({ h: 'VALOR', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { halign: 'right', fontStyle: 'bold' } });
+    const cols = [{ h: 'COLABORADOR', v: (c) => c.nome, st: { minCellWidth: 120 } }], fixo = { cellWidth: 'wrap' }, dirFixo = { halign: 'right', cellWidth: 'wrap' };
+    if (P.colCpf) cols.push({ h: 'CPF', v: (c) => c.cpf || '', st: fixo });
+    if (P.colCategoria) cols.push({ h: P.colCatDias ? 'CATEGORIA (DIAS)' : 'CATEGORIA', v: (c) => (P.colCatDias ? catDiasTxt(c, '\n') : c.categoria), st: { cellWidth: 'wrap' } });
+    if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: dirFixo });
+    if (comConsumo || comDesc) {
+      cols.push({ h: 'GORJETA', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: dirFixo });
+      if (comConsumo) cols.push({ h: 'CONSUMO', v: (c) => (c.desconto > 0 ? '- ' + brl(c.desconto) : '-'), t: () => (r.totalConsumo > 0 ? '- ' + brl(r.totalConsumo) : '-'), st: dirFixo });
+      if (comDesc) cols.push({ h: 'DESCONTOS', v: (c) => (c.descAplicado > 0 ? '- ' + brl(c.descAplicado) : brl(0)), t: () => (r.totalDescontos > 0 ? '- ' + brl(r.totalDescontos) : brl(0)), st: dirFixo });
+      cols.push({ h: 'A RECEBER', v: (c) => brl(c.pagar), t: () => brl(r.totalPagar), st: { ...dirFixo, fontStyle: 'bold' } });
+    } else cols.push({ h: 'VALOR', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { ...dirFixo, fontStyle: 'bold' } });
     const iAss = cols.length;
-    if (P.colAssinatura) cols.push({ h: 'ASSINATURA', v: () => '', st: { cellWidth: r.totalConsumo > 0 || r.totalPendente > 0 ? 92 : 140 } });
+    if (P.colAssinatura) cols.push({ h: 'ASSINATURA', v: () => '', st: { cellWidth: deitado ? 150 : 120 } });
     const assinaturaLinha = (d) => { if (d.section === 'body' && d.column.index === iAss) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6); } };
-    const comConsumo = r.totalConsumo > 0 || r.totalPendente > 0;
-    tabela(cols, r.colaboradores, r, { ...(comConsumo ? { bodyStyles: { textColor: TINTA, fontSize: 9 }, headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 7 }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold', fontSize: 8.5 } } : {}), ...(P.colAssinatura ? { didDrawCell: assinaturaLinha } : {}) });
+    const fs = 9.5;
+    tabela(cols, r.colaboradores, r, { bodyStyles: { textColor: TINTA, fontSize: fs, minCellHeight: 28 }, headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 7 }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold', fontSize: fs }, ...(P.colAssinatura ? { didDrawCell: assinaturaLinha } : {}) });
+    if (r.totalPendenteDesc > 0) {
+      const pend = r.colaboradores.filter((c) => c.pendenteDesc > 0).map((c) => `${c.nome} ${brl(c.pendenteDesc)}`).join('; ');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SEC);
+      const ln = doc.splitTextToSize(`Descontos maiores que o valor a receber, não descontados aqui: ${pend}.`, W - 80);
+      doc.text(ln, 40, y - 16); y += ln.length * 11;
+    }
     if (r.totalPendente > 0) {
       const pend = r.colaboradores.filter((c) => c.pendente > 0).map((c) => `${c.nome} ${brl(c.pendente)}`).join('; ');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SEC);
