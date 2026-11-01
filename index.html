@@ -245,6 +245,24 @@ td small.cpf { display: block; white-space: nowrap; font-size: 12px; color: var(
 td small.desc { display: block; font-size: 12px; color: var(--secundario); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pendente { color: var(--perigo); }
 .resumo .tag.cat { white-space: normal; text-align: left; }
+.sel-topo { margin: -6px 0 10px; }
+.sel-dia { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.sel-dia input, .sel-topo input { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; flex: none; border: 2px solid var(--ferrugem-borda); background: var(--papel); display: grid; place-items: center; cursor: pointer; }
+.sel-dia input::after, .sel-topo input::after { content: ""; width: 10px; height: 10px; background: var(--ferrugem); transform: scale(0); transition: transform .1s; }
+.sel-dia input:checked::after, .sel-topo input:checked::after { transform: scale(1); }
+.sel-dia input:focus-visible, .sel-topo input:focus-visible { outline: 3px solid var(--dourado); }
+.t-salvos tr.marcado > td { background: var(--celula); }
+.barra-salvar.sel .mini-resumo { display: grid; margin-right: auto; line-height: 1.1; }
+.barra-salvar.sel .mini-resumo span { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--secundario); }
+.barra-salvar.sel .mini-resumo b { font-family: var(--f-titulo); font-size: 22px; }
+.barra-salvar.sel .mini-resumo small { font-size: 12px; color: var(--secundario); }
+.lote { border: 2px dashed var(--tracejado); background: var(--celula); }
+.lote summary { cursor: pointer; padding: 12px 14px; font-weight: 800; font-size: 14px; color: var(--ferrugem-txt); }
+.lote summary:focus-visible { outline: 3px solid var(--dourado); }
+.lote-corpo { padding: 0 14px 14px; display: grid; gap: 12px; }
+.lote-corpo p { margin: 0; font-size: 13.5px; }
+.lote-campos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.lote-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
 .cat-dias { display: inline-block; white-space: nowrap; margin: 0 10px 2px 0; }
 .cat-dias b { font-variant-numeric: tabular-nums; color: var(--ferrugem-txt); margin-left: 2px; }
 .desc-in { display: inline-flex; align-items: center; background: var(--papel); border: 2px solid var(--tracejado); min-height: 36px; width: 104px; }
@@ -456,6 +474,12 @@ footer.rodape img { width: 150px; height: auto; display: block; }
     background: var(--papel); border-top: 2px solid var(--ferrugem-borda); box-shadow: 0 -6px 0 var(--creme); margin-top: 22px; flex-wrap: nowrap; align-items: center; gap: 8px; }
   .barra-salvar .btn { flex: 1; min-height: 50px; padding: 0 10px; box-shadow: 2px 2px 0 var(--sombra); }
   .barra-salvar .btn.grande { font-size: 16px; }
+  .barra-salvar.sel { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; }
+  .barra-salvar.sel .mini-resumo { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 0; }
+  .barra-salvar.sel .mini-resumo b { font-size: 18px; }
+  .barra-salvar.sel .btn { min-height: 46px; font-size: 13px; }
+  .lote-campos { grid-template-columns: minmax(0, 1fr); }
+  .lote-acoes .btn { flex: 1 1 100%; }
   .barra-salvar.mes { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; }
   .barra-salvar.mes .mini-resumo { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 0; }
   .barra-salvar.mes .mini-resumo b { font-size: 18px; }
@@ -686,14 +710,18 @@ footer.rodape img { width: 150px; height: auto; display: block; }
     <section class="tela" id="tela-mensal" hidden>
       <header class="cabeca">
         <div>
-          <div class="eyebrow">Lançar</div>
-          <h1>Lançamento mensal</h1>
-          <p>Envie de uma vez os relatórios de cada dia do mês. O site lê a data e a taxa de cada um e coloca os dias em ordem. Depois é só ir dia a dia marcando quem trabalhou e salvar o mês todo.</p>
+          <div class="eyebrow" id="mm-eyebrow">Lançar</div>
+          <h1 id="mm-h1">Lançamento mensal</h1>
+          <p id="mm-intro">Envie de uma vez os relatórios de cada dia do mês. O site lê a data e a taxa de cada um e coloca os dias em ordem. Depois é só ir dia a dia marcando quem trabalhou e salvar o mês todo.</p>
         </div>
       </header>
 
+      <div id="mm-faixa-ed" class="faixa-edicao" hidden>
+        <span id="mm-faixa-txt"></span>
+        <button class="btn mini" id="mm-concluir" type="button">Concluir edição</button>
+      </div>
       <div class="painel listrado pilha">
-        <h2>Relatórios <span class="conta" id="mm-conta"></span></h2>
+        <h2 id="mm-h2">Relatórios <span class="conta" id="mm-conta"></span></h2>
         <div id="mm-zona" class="zona-pdf">
           <p>Arraste aqui os relatórios do mês (<b>PDF, Excel, CSV ou TXT</b>), um arquivo por dia. Pode escolher vários de uma vez.</p>
           <div class="mm-acoes">
@@ -707,6 +735,22 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           <div class="mm-topo"><span class="eyebrow">Dias · toque para abrir</span><button class="link-btn" id="mm-recomecar" type="button">Recomeçar o mês</button></div>
           <div id="mm-dias" class="dias-mes" role="list"></div>
         </div>
+        <details id="mm-lote" class="lote" hidden>
+          <summary>Mudar em todos os dias de uma vez</summary>
+          <div class="lote-corpo">
+            <p class="muted">Escolha a pessoa e o que fazer. Vale para todos os dias desta lista; depois é só salvar.</p>
+            <div class="lote-campos">
+              <label class="campo" for="lt-nome"><span>Pessoa</span><input id="lt-nome" list="nomes" placeholder="Nome" autocomplete="off"></label>
+              <label class="campo" for="lt-cat"><span>Categoria</span><select id="lt-cat"></select></label>
+            </div>
+            <div class="lote-acoes">
+              <button class="btn" type="button" data-lote="incluir">Incluir em todos os dias</button>
+              <button class="btn" type="button" data-lote="somar">Somar a categoria onde ela está</button>
+              <button class="btn" type="button" data-lote="trocar">Trocar a categoria principal</button>
+              <button class="btn perigo" type="button" data-lote="tirar">Tirar de todos os dias</button>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div id="mm-trabalho" class="grade-lanc" style="margin-top:28px" hidden>
@@ -777,7 +821,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
         <div>
           <div class="eyebrow">Acompanhar</div>
           <h1>Lançamentos salvos</h1>
-          <p>Toque num dia para ver a divisão. Use Editar ou Excluir para corrigir um erro.</p>
+          <p>Toque num dia para ver a divisão. Use Editar ou Excluir para corrigir um erro. Para mudar vários de uma vez, marque os dias e toque em Editar juntos.</p>
         </div>
         <div class="filtros">
           <label class="campo" for="s-de"><span>De</span><input type="date" id="s-de"></label>
@@ -786,6 +830,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
         </div>
       </header>
       <div class="painel listrado">
+        <div class="sel-topo"><label class="chk" for="s-sel-todos"><input type="checkbox" id="s-sel-todos">Selecionar todos os dias da lista</label></div>
         <div class="rolagem">
           <table class="t-salvos">
             <thead class="cab-desk"><tr><th>Dia</th><th class="num">Gerado</th><th class="num">Retido</th><th class="num">Distribuído</th><th class="num">Pessoas</th><th>Divisão</th><th></th></tr></thead>
@@ -793,6 +838,12 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           </table>
         </div>
         <div id="s-vazio" class="vazio" hidden></div>
+      </div>
+      <div id="s-barra" class="barra-salvar sel" hidden>
+        <div class="mini-resumo"><span>Selecionados</span><b id="s-n">0</b><small id="s-soma"></small></div>
+        <button class="btn" id="s-limpar-sel">Limpar seleção</button>
+        <button class="btn perigo" id="s-excluir-sel">Excluir</button>
+        <button class="btn principal grande" id="s-editar-sel">Editar juntos</button>
       </div>
       <div style="height:28px"></div>
     </section>
@@ -1588,13 +1639,17 @@ function analisar(lido) {
    Vários relatórios de uma vez; cada dia vira um lançamento comum.
    O rascunho fica guardado neste navegador até ser salvo.
    ============================================================ */
-const MKEY = 'repax-mensal';
-let M = (() => { try { const m = JSON.parse(localStorage.getItem(MKEY)); if (m && Array.isArray(m.dias)) return m; } catch {} return { dias: [], atual: 0 }; })();
-const guardarM = () => { try { localStorage.setItem(MKEY, JSON.stringify(M)); } catch {} };
+const MKEY = 'repax-mensal', EKEY = 'repax-edicao';
+const lerM = (k) => { try { const m = JSON.parse(localStorage.getItem(k)); if (m && Array.isArray(m.dias)) return m; } catch {} return null; };
+// M é o que a tela mostra: o rascunho do mês ou uma edição em lote de lançamentos salvos
+let M = lerM(EKEY) || lerM(MKEY) || { dias: [], atual: 0 };
+const emEdicao = () => !!M.edicao;
+const guardarM = () => { try { localStorage.setItem(emEdicao() ? EKEY : MKEY, JSON.stringify(M)); } catch {} };
+function sairEdicao() { try { localStorage.removeItem(EKEY); } catch {} M = lerM(MKEY) || { dias: [], atual: 0 }; }
 const diaM = () => M.dias[M.atual];
 const prontoM = (d) => !!d.data && d.valor > 0 && d.equipe.length > 0;
-const regrasM = () => ({ retencoes: cfg().retencoes, modo: cfg().modoDivisao, categorias: cfg().categorias });
-const calcM = (d) => { const r = regrasM(); return Calc.calcular({ valorBruto: d.valor, retencoes: r.retencoes, colaboradores: d.equipe, modo: r.modo, categorias: r.categorias }); };
+const regrasM = (d) => (d && d.regras) || { retencoes: cfg().retencoes, modo: cfg().modoDivisao, categorias: cfg().categorias };
+const calcM = (d) => { const r = regrasM(d); return Calc.calcular({ valorBruto: d.valor, retencoes: r.retencoes, colaboradores: d.equipe, modo: r.modo, categorias: r.categorias }); };
 const ordenarM = () => { const cur = diaM(); M.dias.sort((a, b) => (a.data || '9999').localeCompare(b.data || '9999')); M.atual = Math.max(0, M.dias.indexOf(cur)); };
 function mexeu(d = diaM()) { if (d) d.salvo = false; guardarM(); }
 
@@ -1640,8 +1695,10 @@ $('#mm-recomecar').addEventListener('click', async () => {
 });
 $('#mm-tirar').addEventListener('click', async () => {
   const d = diaM(); if (!d) return;
-  if ((d.equipe.length || d.valor) && !d.salvo && !(await confirmar('Tirar este dia?', `O dia ${d.data ? dataBR(d.data) : 'sem data'} sai da lista do mês e não será salvo.`, 'Tirar'))) return;
-  M.dias.splice(M.atual, 1); M.atual = Math.min(M.atual, M.dias.length - 1); guardarM(); renderMensal();
+  if ((d.equipe.length || d.valor) && !d.salvo && !(await confirmar('Tirar este dia?', emEdicao() ? `As mudanças em ${dataBR(d.data)} ainda não salvas serão descartadas. O lançamento salvo continua como estava.` : `O dia ${d.data ? dataBR(d.data) : 'sem data'} sai da lista do mês e não será salvo.`, 'Tirar'))) return;
+  M.dias.splice(M.atual, 1); M.atual = Math.min(M.atual, M.dias.length - 1);
+  if (emEdicao() && !M.dias.length) { sairEdicao(); toast('Edição encerrada.'); irPara('salvos'); return; }
+  guardarM(); renderMensal();
 });
 
 $('#mm-data').addEventListener('change', () => { const d = diaM(); d.data = $('#mm-data').value; ordenarM(); mexeu(d); renderMensal(); });
@@ -1678,7 +1735,7 @@ $('#mm-form').addEventListener('submit', (e) => {
 
 function tiraM() {
   $('#mm-dias').innerHTML = M.dias.map((d, i) => {
-    const st = d.salvo ? '✓ salvo' : !d.data ? 'sem data' : !(d.valor > 0) ? 'sem valor' : !d.equipe.length ? 'falta equipe' : `${d.equipe.length} ${d.equipe.length > 1 ? 'pessoas' : 'pessoa'}`;
+    const st = d.salvo ? (emEdicao() ? 'sem mudança' : '✓ salvo') : !d.data ? 'sem data' : !(d.valor > 0) ? 'sem valor' : !d.equipe.length ? 'falta equipe' : `${d.equipe.length} ${d.equipe.length > 1 ? 'pessoas' : 'pessoa'}`;
     const cls = ['dia-mes', i === M.atual ? 'ativo' : '', d.salvo ? 'salvo' : prontoM(d) ? 'pronto' : ''].join(' ');
     return `<button class="${cls}" role="listitem" data-i="${i}" aria-current="${i === M.atual}"><small>${d.data ? esc(diaSem(d.data).slice(0, 3)) : '—'}</small><b>${d.data ? dataBR(d.data).slice(0, 5) : '??/??'}</b><small>${d.valor > 0 ? brl(d.valor) : '—'}</small><small class="st">${st}</small></button>`;
   }).join('');
@@ -1688,8 +1745,13 @@ function tiraM() {
   $('#mm-conta').textContent = M.dias.length ? `${M.dias.length} ${M.dias.length > 1 ? 'dias' : 'dia'}` : '';
   $('#mm-m-total').textContent = brl(total);
   const salvos = M.dias.length - pend.length;
-  $('#mm-m-info').textContent = `${prontos.length} de ${pend.length} prontos para salvar` + (salvos ? ` · ${salvos} já salvos` : '');
-  $('#mm-salvar').textContent = prontos.length ? `Salvar ${prontos.length} ${prontos.length > 1 ? 'dias' : 'dia'}` : 'Salvar mês';
+  if (emEdicao()) {
+    $('#mm-m-info').textContent = pend.length ? `${pend.length} ${pend.length > 1 ? 'dias alterados' : 'dia alterado'}, ainda não ${pend.length > 1 ? 'salvos' : 'salvo'}` : 'Nenhuma alteração pendente';
+    $('#mm-salvar').textContent = prontos.length ? `Salvar alterações (${prontos.length})` : 'Salvar alterações';
+  } else {
+    $('#mm-m-info').textContent = `${prontos.length} de ${pend.length} prontos para salvar` + (salvos ? ` · ${salvos} já salvos` : '');
+    $('#mm-salvar').textContent = prontos.length ? `Salvar ${prontos.length} ${prontos.length > 1 ? 'dias' : 'dia'}` : 'Salvar mês';
+  }
   $('#mm-salvar').disabled = !prontos.length;
   $('#mm-ant').disabled = M.atual <= 0; $('#mm-prox').disabled = M.atual >= M.dias.length - 1;
 }
@@ -1697,7 +1759,7 @@ function tiraM() {
 function resumoM() {
   const d = diaM(); if (!d) return;
   const r = calcM(d);
-  const rg = regrasM();
+  const rg = regrasM(d);
   $('#mm-r-regra').textContent = (r.modo === 'peso' ? 'Por peso: ' + rg.categorias.map((c) => `${c.nome} ${pctBR(pesoDe(c))}`).join(' · ')
     : r.modo === 'categoria' ? 'Por categoria: ' + rg.categorias.map((c) => `${c.nome} ${pctBR(c.pct)}%`).join(' · ') : 'Partes iguais entre quem trabalhou') + '.' + notaExtra(r.modo, d.equipe);
   $('#mm-r-bruto').textContent = brl(r.valorBruto); $('#mm-r-liq').textContent = brl(r.valorLiquido); $('#mm-r-qtd').textContent = String(d.equipe.length);
@@ -1711,10 +1773,11 @@ function resumoM() {
 function renderMensal() {
   const tem = M.dias.length > 0;
   $('#mm-tira').hidden = !tem; $('#mm-trabalho').hidden = !tem; $('#mm-barra').hidden = !tem;
-  if (!tem) { $('#mm-conta').textContent = ''; return; }
+  if (!tem) { $('#mm-conta').textContent = ''; modoTelaM(); return; }
   M.atual = Math.min(Math.max(0, M.atual), M.dias.length - 1);
-  const d = diaM(), cats = cfg().categorias;
+  const d = diaM(), cats = regrasM(d).categorias;
   tiraM();
+  modoTelaM();
   $('#mm-titulo').textContent = d.data ? `${dataBR(d.data)}` : 'Dia sem data';
   $('#mm-arq').textContent = `Dia ${M.atual + 1} de ${M.dias.length}` + (d.arquivo ? ` · ${d.arquivo}` : ' · sem arquivo') + (d.salvo ? ' · já salvo (mudanças pedem salvar de novo)' : '');
   if (document.activeElement !== $('#mm-data')) $('#mm-data').value = d.data || '';
@@ -1752,24 +1815,65 @@ function renderMensal() {
   resumoM();
 }
 
+
+function modoTelaM() {
+  const ed = emEdicao();
+  $('#mm-eyebrow').textContent = ed ? 'Acompanhar' : 'Lançar';
+  $('#mm-h1').textContent = ed ? 'Editar lançamentos' : 'Lançamento mensal';
+  $('#mm-intro').textContent = ed ? 'Os lançamentos escolhidos estão abaixo. Mude o que precisar, dia a dia ou em todos de uma vez, e salve. As regras de divisão de cada dia são mantidas.'
+    : 'Envie de uma vez os relatórios de cada dia do mês. O site lê a data e a taxa de cada um e coloca os dias em ordem. Depois é só ir dia a dia marcando quem trabalhou e salvar o mês todo.';
+  $('#mm-faixa-ed').hidden = !ed;
+  $('#mm-barra .mini-resumo span').textContent = ed ? 'Total gerado' : 'Total do mês';
+  if (ed) $('#mm-faixa-txt').innerHTML = `Editando <b>${M.dias.length}</b> ${M.dias.length > 1 ? 'lançamentos salvos' : 'lançamento salvo'}. Nada muda até você salvar.`;
+  $('#mm-zona').hidden = ed; $('#mm-recomecar').hidden = ed;
+  $('#mm-h2').firstChild.textContent = ed ? 'Dias em edição ' : 'Relatórios ';
+  $('#mm-tirar').textContent = ed ? 'Tirar da edição' : 'Tirar este dia';
+  $('#mm-lote').hidden = M.dias.length < 2;
+  const cats = new Map(); M.dias.forEach((d) => regrasM(d).categorias.forEach((c) => cats.set(c.id, c))); cfg().categorias.forEach((c) => { if (!cats.has(c.id)) cats.set(c.id, c); });
+  const sel = $('#lt-cat').value; $('#lt-cat').innerHTML = opcoesCat(cats.has(sel) ? sel : [...cats.keys()][0], [...cats.values()]);
+}
+$('#mm-concluir').addEventListener('click', async () => {
+  const pend = M.dias.filter((d) => !d.salvo).length;
+  if (pend && !(await confirmar('Concluir sem salvar?', `${pend} ${pend > 1 ? 'dias têm mudanças' : 'dia tem mudanças'} ainda não ${pend > 1 ? 'salvas' : 'salvas'}. Elas serão descartadas.`, 'Descartar e sair'))) return;
+  sairEdicao(); irPara('salvos');
+});
+$$('[data-lote]').forEach((b) => b.addEventListener('click', async () => {
+  const nome = $('#lt-nome').value.trim().replace(/\s+/g, ' '), cat = $('#lt-cat').value, acao = b.dataset.lote;
+  if (!nome) { $('#lt-nome').focus(); return toast('Escreva o nome da pessoa.', true); }
+  const m = D.equipe.find((x) => norm(x.nome) === norm(nome)), nm = m ? m.nome : nome, nomeC = $('#lt-cat').selectedOptions[0]?.textContent || '';
+  const achar = (d) => d.equipe.find((x) => norm(x.nome) === norm(nm));
+  const txt = { incluir: `Incluir <b>${esc(nm)}</b> como ${esc(nomeC)} em todos os dias em que ainda não está?`, somar: `Somar a categoria <b>${esc(nomeC)}</b> para ${esc(nm)} em todos os dias em que ela está?`, trocar: `Trocar a categoria principal de <b>${esc(nm)}</b> para ${esc(nomeC)} em todos os dias em que ela está?`, tirar: `Tirar <b>${esc(nm)}</b> de todos os dias desta lista?` }[acao];
+  if (!(await confirmar('Mudar em todos os dias', txt + '<br><br>Nada é salvo até você tocar em Salvar.', 'Aplicar'))) return;
+  let n = 0;
+  M.dias.forEach((d) => {
+    const c = achar(d), temCat = regrasM(d).categorias.some((k) => k.id === cat);
+    if (acao === 'incluir' && !c && temCat) { d.equipe.push({ nome: nm, categoriaId: cat, extras: [], tipo: m ? tipoDe(m) : 'diarista' }); n++; mexeu(d); }
+    if (acao === 'tirar' && c) { d.equipe.splice(d.equipe.indexOf(c), 1); n++; mexeu(d); }
+    if (acao === 'somar' && c && temCat && !Calc.catsDe(c).includes(cat)) { c.extras = [...(c.extras || []), cat]; n++; mexeu(d); }
+    if (acao === 'trocar' && c && temCat && c.categoriaId !== cat) { c.categoriaId = cat; c.extras = (c.extras || []).filter((x) => x !== cat); n++; mexeu(d); }
+  });
+  guardarM(); renderMensal();
+  toast(n ? `Mudança feita em ${n} ${n > 1 ? 'dias' : 'dia'}. Confira e toque em Salvar.` : 'Nenhum dia precisou mudar.', !n);
+}));
+
 $('#mm-salvar').addEventListener('click', async () => {
-  const rg = regrasM(), pend = M.dias.filter((d) => !d.salvo), prontos = pend.filter(prontoM);
-  if (!prontos.length) return toast('Nenhum dia pronto. Cada dia precisa de data, valor e equipe.', true);
-  if (rg.modo === 'categoria') { const s = rg.categorias.reduce((a, c) => a + Number(c.pct || 0), 0); if (Math.abs(s - 100) > 0.001) return toast(`As categorias somam ${s}%. Ajuste para 100% em Configurações.`, true); }
+  const pend = M.dias.filter((d) => !d.salvo), prontos = pend.filter(prontoM);
+  if (!prontos.length) return toast(emEdicao() ? 'Nenhuma alteração para salvar.' : 'Nenhum dia pronto. Cada dia precisa de data, valor e equipe.', true);
+  for (const d of prontos) { const rg = regrasM(d); if (rg.modo === 'categoria') { const s = rg.categorias.reduce((a, c) => a + Number(c.pct || 0), 0); if (Math.abs(s - 100) > 0.001) return toast(`As categorias de ${dataBR(d.data)} somam ${s}%. Ajuste para 100%.`, true); } }
   const ids = new Set(M.dias.map((d) => d.id));
   const repetidos = [...new Set(prontos.filter((d) => D.lanc.some((l) => l.data === d.data && !ids.has(l.id)) || prontos.filter((x) => x.data === d.data).length > 1).map((d) => d.data))].sort();
   const faltam = pend.length - prontos.length;
   let txt = `Serão salvos <b>${prontos.length}</b> ${prontos.length > 1 ? 'dias' : 'dia'}, somando <b>${brl(prontos.reduce((a, d) => a + d.valor, 0))}</b>.`;
   if (faltam) txt += `<br><br>${faltam} ${faltam > 1 ? 'dias ainda não estão prontos e ficam' : 'dia ainda não está pronto e fica'} aqui para depois.`;
   if (repetidos.length) txt += `<br><br>Atenção: já existe lançamento em <b>${repetidos.map(dataBR).join(', ')}</b>. Salvar deixa dois lançamentos no mesmo dia.`;
-  if (!(await confirmar('Salvar o mês?', txt, 'Salvar'))) return;
+  if (emEdicao()) txt = txt.replace('Serão salvos', 'Serão atualizados');
+  if (!(await confirmar(emEdicao() ? 'Salvar as alterações?' : 'Salvar o mês?', txt, 'Salvar'))) return;
   const btn = $('#mm-salvar'); btn.disabled = true;
-  const cats = rg.categorias.map((c) => ({ id: c.id, nome: c.nome, pct: Number(c.pct) || 0, peso: pesoDe(c) }));
   let ok = 0;
   for (const d of prontos) {
     const r = calcM(d), antigo = D.lanc.find((x) => x.id === d.id), agora = new Date().toISOString();
     const l = { id: d.id, data: d.data, valorBruto: r.valorBruto, retencoes: r.retencoes, retencaoPct: r.retencaoPct, valorRetido: r.valorRetido, valorLiquido: r.valorLiquido,
-      modo: r.modo, categorias: cats, colaboradores: r.itens, origem: d.arquivo ? 'relatorio' : 'manual', arquivo: d.arquivo || null, obs: (d.obs || '').trim(),
+      modo: r.modo, categorias: regrasM(d).categorias.map((c) => ({ id: c.id, nome: c.nome, pct: Number(c.pct) || 0, peso: pesoDe(c) })), colaboradores: r.itens, origem: d.origem || (d.arquivo ? 'relatorio' : 'manual'), arquivo: d.arquivo || null, obs: (d.obs || '').trim(),
       criadoEm: (antigo && antigo.criadoEm) || agora, atualizadoEm: agora };
     if (!(await salvarLanc(l))) break;
     d.salvo = true; ok++; guardarM();
@@ -1778,7 +1882,7 @@ $('#mm-salvar').addEventListener('click', async () => {
   prontos.filter((d) => d.salvo).forEach((d) => d.equipe.forEach((c) => { if (!D.equipe.some((m) => norm(m.nome) === norm(c.nome)) && !novos.has(norm(c.nome))) novos.set(norm(c.nome), c); }));
   for (const c of novos.values()) await salvarMembro({ id: novoId(), nome: c.nome, categoriaId: c.categoriaId, tipo: c.tipo });
   btn.disabled = false;
-  if (ok) toast(`${ok} ${ok > 1 ? 'dias salvos' : 'dia salvo'}. Eles já aparecem em Lançamentos salvos e no Relatório.`);
+  if (ok) toast(emEdicao() ? `${ok} ${ok > 1 ? 'lançamentos atualizados' : 'lançamento atualizado'}.` : `${ok} ${ok > 1 ? 'dias salvos' : 'dia salvo'}. Eles já aparecem em Lançamentos salvos e no Relatório.`);
   const prox = M.dias.findIndex((d) => !d.salvo); if (prox >= 0) M.atual = prox;
   guardarM(); renderMensal();
 });
@@ -1787,6 +1891,33 @@ $('#mm-salvar').addEventListener('click', async () => {
    LANÇAMENTOS SALVOS
    ============================================================ */
 let aberto = null;
+const SEL = new Set();
+function barraSel(lista) {
+  const sel = D.lanc.filter((l) => SEL.has(l.id));
+  $('#s-barra').hidden = !sel.length;
+  $('#s-n').textContent = String(sel.length);
+  $('#s-soma').textContent = sel.length ? `${brl(sel.reduce((a, l) => a + (Number(l.valorBruto) || 0), 0))} gerados` : '';
+  $('#s-sel-todos').checked = !!lista && lista.length > 0 && lista.every((l) => SEL.has(l.id));
+  $$('#s-corpo tr.principal').forEach((tr) => tr.classList.toggle('marcado', SEL.has(tr.dataset.id)));
+}
+$('#s-limpar-sel').addEventListener('click', () => { SEL.clear(); renderSalvos(); });
+$('#s-excluir-sel').addEventListener('click', async () => {
+  const sel = D.lanc.filter((l) => SEL.has(l.id)).sort((a, b) => a.data.localeCompare(b.data)); if (!sel.length) return;
+  if (!(await confirmar(`Excluir ${sel.length} ${sel.length > 1 ? 'lançamentos' : 'lançamento'}?`, `Serão apagados de vez: <b>${sel.map((l) => dataBR(l.data).slice(0, 5)).join(', ')}</b> (${brl(sel.reduce((a, l) => a + (Number(l.valorBruto) || 0), 0))}).`, 'Excluir'))) return;
+  let n = 0; for (const l of sel) { if (await excluirLanc(l.id)) { n++; SEL.delete(l.id); } else break; }
+  if (n) toast(`${n} ${n > 1 ? 'lançamentos excluídos' : 'lançamento excluído'}.`);
+});
+$('#s-editar-sel').addEventListener('click', async () => {
+  const sel = D.lanc.filter((l) => SEL.has(l.id)).sort((a, b) => a.data.localeCompare(b.data)); if (!sel.length) return;
+  const ant = lerM(EKEY);
+  if (ant && ant.dias.some((d) => !d.salvo) && !(await confirmar('Há uma edição em andamento', 'Uma edição anterior tem mudanças ainda não salvas. Começar outra descarta essas mudanças.', 'Começar nova'))) return;
+  M = { edicao: true, atual: 0, dias: sel.map((l) => ({
+    id: l.id, arquivo: l.arquivo || '', origem: l.origem || 'manual', data: l.data, valor: Number(l.valorBruto) || 0, cands: [], obs: l.obs || '', salvo: true,
+    regras: { retencoes: Calc.retDe(l).map((x) => ({ id: x.id, nome: x.nome, pct: Number(x.pct) || 0 })), modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias },
+    equipe: l.colaboradores.map((c) => { const m = D.equipe.find((x) => norm(x.nome) === norm(c.nome)); return { nome: c.nome, categoriaId: c.categoriaId, extras: Array.isArray(c.extras) ? c.extras.slice() : [], consumo: Number(c.consumo) || 0, tipo: m ? tipoDe(m) : 'fixo' }; }),
+  })) };
+  guardarM(); SEL.clear(); irPara('mensal');
+});
 function retTexto(rs) {
   const v = rs.filter((x) => Number(x.valor) > 0);
   return v.length ? `<p class="ret-detalhe">Retido: ${v.map((x) => `${esc(x.nome)} ${pctBR(x.pct)}% = <b>${brl(x.valor)}</b>`).join(' · ')}</p>` : '';
@@ -1799,7 +1930,7 @@ function renderSalvos() {
   v.textContent = !D.pronto ? 'Carregando lançamentos…' : D.lanc.length ? 'Nenhum lançamento neste período.' : 'Nenhum dia salvo ainda. Faça o primeiro em Lançamento do dia.';
   $('#s-corpo').innerHTML = lista.map((l) => `
     <tr class="principal" data-id="${esc(l.id)}" tabindex="0" aria-expanded="${aberto === l.id}">
-      <td class="c-data"><div class="data-grande">${dataBR(l.data)}<small>${diaSem(l.data)}</small></div></td>
+      <td class="c-data"><label class="sel-dia"><input type="checkbox" data-sel="${esc(l.id)}"${SEL.has(l.id) ? ' checked' : ''} aria-label="Selecionar ${dataBR(l.data)}"><div class="data-grande">${dataBR(l.data)}<small>${diaSem(l.data)}</small></div></label></td>
       <td class="num c-gerado" data-label="Gerado">${brl(l.valorBruto)}</td>
       <td class="num c-retido" data-label="Retido">${brl(l.valorRetido)} <small class="muted">${pctBR(l.retencaoPct)}%</small></td>
       <td class="num c-dist" data-label="Distribuído"><span class="valor">${brl(l.valorLiquido)}</span></td>
@@ -1811,10 +1942,14 @@ function renderSalvos() {
       ${l.colaboradores.map((c) => `<tr><td>${esc(c.nome)}</td><td>${esc(c.categoria)}</td><td class="num">${brl(c.valor)}${Number(c.consumo) > 0 ? `<small class="desc">consumo − ${brl(c.consumo)}</small>` : ''}</td></tr>`).join('')}</tbody></table></td></tr>` : ''}`).join('');
   $$('#s-corpo tr.principal').forEach((tr) => {
     const abrir = () => { aberto = aberto === tr.dataset.id ? null : tr.dataset.id; renderSalvos(); };
-    tr.addEventListener('click', (e) => { if (!e.target.closest('button')) abrir(); });
+    tr.addEventListener('click', (e) => { if (!e.target.closest('button, label, input')) abrir(); });
     tr.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === tr) { e.preventDefault(); abrir(); } });
   });
   $$('[data-ed]').forEach((b) => b.addEventListener('click', () => editar(b.dataset.ed)));
+  [...SEL].forEach((id) => { if (!D.lanc.some((l) => l.id === id)) SEL.delete(id); });
+  $$('#s-corpo [data-sel]').forEach((i) => i.addEventListener('change', () => { if (i.checked) SEL.add(i.dataset.sel); else SEL.delete(i.dataset.sel); barraSel(lista); }));
+  $('#s-sel-todos').onchange = () => { lista.forEach((l) => ($('#s-sel-todos').checked ? SEL.add(l.id) : SEL.delete(l.id))); renderSalvos(); };
+  barraSel(lista);
   $$('[data-ex]').forEach((b) => b.addEventListener('click', async () => {
     const l = D.lanc.find((x) => x.id === b.dataset.ex);
     if (!(await confirmar('Excluir este dia?', `O lançamento de <b>${dataBR(l.data)}</b> (${brl(l.valorBruto)}) será apagado de vez.`, 'Excluir'))) return;
