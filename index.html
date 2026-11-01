@@ -246,6 +246,8 @@ td small.desc { display: block; font-size: 12px; color: var(--secundario); font-
 .pendente { color: var(--perigo); }
 .resumo .tag.cat { white-space: normal; text-align: left; }
 .sel-topo { margin: -6px 0 10px; }
+.faixa-botoes { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.faixa-edicao .faixa-botoes .btn { margin-left: 0; }
 .sel-dia { display: flex; align-items: center; gap: 12px; cursor: pointer; }
 .sel-dia input, .sel-topo input { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; flex: none; border: 2px solid var(--ferrugem-borda); background: var(--papel); display: grid; place-items: center; cursor: pointer; }
 .sel-dia input::after, .sel-topo input::after { content: ""; width: 10px; height: 10px; background: var(--ferrugem); transform: scale(0); transition: transform .1s; }
@@ -718,7 +720,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
 
       <div id="mm-faixa-ed" class="faixa-edicao" hidden>
         <span id="mm-faixa-txt"></span>
-        <button class="btn mini" id="mm-concluir" type="button">Concluir edição</button>
+        <span class="faixa-botoes"><button class="btn mini" id="mm-regras-atuais" type="button">Usar regras atuais</button><button class="btn mini" id="mm-concluir" type="button">Concluir edição</button></span>
       </div>
       <div class="painel listrado pilha">
         <h2 id="mm-h2">Relatórios <span class="conta" id="mm-conta"></span></h2>
@@ -1383,16 +1385,19 @@ function renderTudo() {
   if ($('#app').hidden) return;
   ({ lancamento: renderLanc, mensal: renderMensal, salvos: renderSalvos, relatorio: renderRel, equipe: renderEquipe, config: renderCats })[abaAtual]();
 }
+// Lançamento salvo guarda as categorias da época; as criadas depois entram com o peso/% atual
+const catsUniao = (salvas) => { const l = Array.isArray(salvas) && salvas.length ? salvas.map((c) => ({ ...c })) : []; cfg().categorias.forEach((c) => { if (!l.some((x) => x.id === c.id)) l.push({ ...c }); }); return l.length ? l : cfg().categorias; };
 const nomeCat = (id, cats = cfg().categorias) => (cats.find((c) => c.id === id) || {}).nome || '—';
 const opcoesCat = (sel, cats = cfg().categorias) => cats.map((c) => `<option value="${esc(c.id)}"${c.id === sel ? ' selected' : ''}>${esc(c.nome)}</option>`).join('');
 
 /* Lista de quem trabalhou (usada no lançamento do dia e no mensal).
    Cada pessoa tem a categoria principal e pode somar outras naquele dia. */
+const opcoesCatOuSumida = (id, cats) => (cats.some((k) => k.id === id) ? '' : `<option value="${esc(id || '')}" selected>Escolha a categoria</option>`) + opcoesCat(id, cats);
 function listaEquipeDia(ul, lista, cats, { mudou, redesenhar, diarista }) {
   ul.innerHTML = lista.map((c, i) => {
     const extras = Array.isArray(c.extras) ? c.extras : [], usadas = Calc.catsDe(c), sobra = cats.some((k) => !usadas.includes(k.id));
     return `<li><b>${esc(c.nome)}${diarista(c) ? '<span class="tag">Diarista</span>' : ''}</b>
-      <div class="cats-dia"><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCat(c.categoriaId, cats)}</select>${extras.map((id, j) => `<span class="extra"><i>+</i><select data-ex="${i}" data-j="${j}" aria-label="Categoria extra de ${esc(c.nome)}">${opcoesCat(id, cats)}</select><button class="x mini" data-exrm="${i}" data-j="${j}" aria-label="Tirar categoria extra de ${esc(c.nome)}">×</button></span>`).join('')}${sobra ? `<button class="mais-cat" data-add="${i}" type="button" title="Somar outra categoria neste dia" aria-label="Somar outra categoria para ${esc(c.nome)}">+ categoria</button>` : ''}</div>
+      <div class="cats-dia"><select data-i="${i}" aria-label="Categoria de ${esc(c.nome)}">${opcoesCatOuSumida(c.categoriaId, cats)}</select>${extras.map((id, j) => `<span class="extra"><i>+</i><select data-ex="${i}" data-j="${j}" aria-label="Categoria extra de ${esc(c.nome)}">${opcoesCatOuSumida(id, cats)}</select><button class="x mini" data-exrm="${i}" data-j="${j}" aria-label="Tirar categoria extra de ${esc(c.nome)}">×</button></span>`).join('')}${sobra ? `<button class="mais-cat" data-add="${i}" type="button" title="Somar outra categoria neste dia" aria-label="Somar outra categoria para ${esc(c.nome)}">+ categoria</button>` : ''}</div>
       <label class="consumo" title="Consumo do colaborador no dia, descontado da gorjeta dele"><span>R$</span><input data-cons="${i}" inputmode="decimal" placeholder="Consumo" value="${c.consumo ? num2(c.consumo) : ''}" aria-label="Consumo de ${esc(c.nome)}"></label><button class="x" data-rm="${i}" aria-label="Tirar ${esc(c.nome)}">×</button></li>`;
   }).join('');
   const q = (sel) => [...ul.querySelectorAll(sel)];
@@ -1532,7 +1537,7 @@ $('#salvar').addEventListener('click', async () => {
 function editar(id) {
   const l = D.lanc.find((x) => x.id === id); if (!l) return;
   irPara('lancamento');
-  F = { editId: l.id, regras: { retencoes: Calc.retDe(l), modo: l.modo, categorias: l.categorias && l.categorias.length ? l.categorias : cfg().categorias }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, extras: Array.isArray(c.extras) ? c.extras.slice() : [], consumo: Number(c.consumo) || 0 })) };
+  F = { editId: l.id, regras: { retencoes: Calc.retDe(l), modo: l.modo, categorias: catsUniao(l.categorias) }, origem: l.origem || 'manual', arquivo: l.arquivo, dia: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, extras: Array.isArray(c.extras) ? c.extras.slice() : [], consumo: Number(c.consumo) || 0 })) };
   setOrigem('manual');
   $('#l-data').value = l.data; $('#l-valor').value = num2(l.valorBruto); $('#l-obs').value = l.obs || '';
   $('#faixa-edicao').hidden = false; $('#edicao-data').textContent = dataBR(l.data); $('#titulo-lanc').textContent = 'Editar lançamento'; $('#salvar').textContent = 'Salvar alterações';
@@ -1648,7 +1653,7 @@ const guardarM = () => { try { localStorage.setItem(emEdicao() ? EKEY : MKEY, JS
 function sairEdicao() { try { localStorage.removeItem(EKEY); } catch {} M = lerM(MKEY) || { dias: [], atual: 0 }; }
 const diaM = () => M.dias[M.atual];
 const prontoM = (d) => !!d.data && d.valor > 0 && d.equipe.length > 0;
-const regrasM = (d) => (d && d.regras) || { retencoes: cfg().retencoes, modo: cfg().modoDivisao, categorias: cfg().categorias };
+const regrasM = (d) => (d && d.regras ? { ...d.regras, categorias: catsUniao(d.regras.categorias) } : { retencoes: cfg().retencoes, modo: cfg().modoDivisao, categorias: cfg().categorias });
 const calcM = (d) => { const r = regrasM(d); return Calc.calcular({ valorBruto: d.valor, retencoes: r.retencoes, colaboradores: d.equipe, modo: r.modo, categorias: r.categorias }); };
 const ordenarM = () => { const cur = diaM(); M.dias.sort((a, b) => (a.data || '9999').localeCompare(b.data || '9999')); M.atual = Math.max(0, M.dias.indexOf(cur)); };
 function mexeu(d = diaM()) { if (d) d.salvo = false; guardarM(); }
@@ -1832,6 +1837,11 @@ function modoTelaM() {
   const cats = new Map(); M.dias.forEach((d) => regrasM(d).categorias.forEach((c) => cats.set(c.id, c))); cfg().categorias.forEach((c) => { if (!cats.has(c.id)) cats.set(c.id, c); });
   const sel = $('#lt-cat').value; $('#lt-cat').innerHTML = opcoesCat(cats.has(sel) ? sel : [...cats.keys()][0], [...cats.values()]);
 }
+$('#mm-regras-atuais').addEventListener('click', async () => {
+  if (!(await confirmar('Usar as regras atuais?', `Os ${M.dias.length} dias desta edição passam a usar as retenções, a forma de divisão e os pesos/porcentagens que estão hoje em Configurações. Os valores são recalculados; nada é salvo até você tocar em Salvar.`, 'Usar regras atuais'))) return;
+  M.dias.forEach((d) => { d.regras = JSON.parse(JSON.stringify({ retencoes: cfg().retencoes, modo: cfg().modoDivisao, categorias: cfg().categorias })); mexeu(d); });
+  guardarM(); renderMensal(); toast('Regras atuais aplicadas. Confira e salve.');
+});
 $('#mm-concluir').addEventListener('click', async () => {
   const pend = M.dias.filter((d) => !d.salvo).length;
   if (pend && !(await confirmar('Concluir sem salvar?', `${pend} ${pend > 1 ? 'dias têm mudanças' : 'dia tem mudanças'} ainda não ${pend > 1 ? 'salvas' : 'salvas'}. Elas serão descartadas.`, 'Descartar e sair'))) return;
