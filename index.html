@@ -1146,8 +1146,8 @@ const Calc = (() => {
     const chave = (x) => x.id || String(x.nome || '').trim().toLowerCase();
     lista.slice().sort((x, y) => x.data.localeCompare(y.data)).forEach((x) => {
       b += toC(x.valorBruto); r += toC(x.valorRetido); l += toC(x.valorLiquido);
-      const rd = retDe(x).map((z) => ({ id: chave(z), nome: z.nome, valor: Number(z.valor) || 0 }));
-      rd.forEach((z) => { const o = rt.get(z.id) || { id: z.id, nome: z.nome, c: 0 }; o.c += toC(z.valor); o.nome = z.nome; rt.set(z.id, o); });
+      const rd = retDe(x).map((z) => ({ id: chave(z), nome: z.nome, pct: Number(z.pct) || 0, valor: Number(z.valor) || 0 }));
+      rd.forEach((z) => { const o = rt.get(z.id) || { id: z.id, nome: z.nome, c: 0, pcts: new Set(), base: 0 }; o.c += toC(z.valor); o.nome = z.nome; o.pcts.add(z.pct); o.base += toC(x.valorBruto); rt.set(z.id, o); });
       dias.push({ data: x.data, valorBruto: x.valorBruto, valorRetido: x.valorRetido, valorLiquido: x.valorLiquido, pessoas: x.colaboradores.length, retencoes: rd });
       x.colaboradores.forEach((c) => {
         const k = c.nome.trim().toLocaleLowerCase('pt-BR');
@@ -1160,7 +1160,8 @@ const Calc = (() => {
       totalConsumo: fromC(Object.values(p).reduce((a, x) => a + Math.min(x.cons, x.c), 0)),
       totalPagar: fromC(l - Object.values(p).reduce((a, x) => a + Math.min(x.cons, x.c), 0)),
       totalPendente: fromC(Object.values(p).reduce((a, x) => a + Math.max(0, x.cons - x.c), 0)),
-      retencoes: [...rt.values()].map((o) => ({ id: o.id, nome: o.nome, valor: fromC(o.c) })),
+      // pct: a % usada (se mudou no período, a % efetiva sobre o total gerado, marcada como média)
+      retencoes: [...rt.values()].map((o) => ({ id: o.id, nome: o.nome, valor: fromC(o.c), pct: o.pcts.size === 1 ? [...o.pcts][0] : (o.base ? Math.round((o.c / o.base) * 10000) / 100 : 0), pctMedia: o.pcts.size > 1 })),
       // consumo é descontado da gorjeta do próprio colaborador, nunca abaixo de zero; o que sobrar fica pendente
       colaboradores: Object.values(p).map((x) => { const desc = Math.min(x.cons, x.c); return { nome: x.nome, categoria: [...x.cats.keys()].join(', '), categoriasDias: [...x.cats].map(([nome, dias]) => ({ nome, dias })), dias: x.dias, valor: fromC(x.c), consumo: fromC(x.cons), desconto: fromC(desc), pagar: fromC(x.c - desc), pendente: fromC(x.cons - desc) }; }).sort((a, z) => a.nome.localeCompare(z.nome, 'pt-BR')),
     };
@@ -1982,6 +1983,7 @@ $('#s-todos').addEventListener('click', () => { $('#s-de').value = $('#s-ate').v
 /* ============================================================
    RELATÓRIO SEMANAL
    ============================================================ */
+const retRotulo = (x) => (x.pct != null && x.valor > 0 ? `${x.nome} · ${x.pctMedia ? 'média ' : ''}${pctBR(x.pct)}%` : x.nome);
 const retsComValor = (r) => { const v = r.retencoes.filter((x) => x.valor > 0); return v.length ? v : [{ nome: 'Retido', valor: 0 }]; };
 const RP = { modo: 'semana', semIni: '', mes: '', dias: new Set() };
 const somaDias = (s, n) => { const d = deISO(s); return iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)); };
@@ -2068,7 +2070,7 @@ function renderRel() {
   $('#rel-conteudo').innerHTML = `
     <div class="kpis">
       <div class="kpi"><span>Total gerado</span><b>${brl(r.totalBruto)}</b></div>
-      ${retsComValor(r).map((x) => `<div class="kpi"><span>${esc(x.nome)}</span><b>${brl(x.valor)}</b></div>`).join('')}
+      ${retsComValor(r).map((x) => `<div class="kpi"><span>${esc(retRotulo(x))}</span><b>${brl(x.valor)}</b></div>`).join('')}
       ${r.totalConsumo > 0 ? `<div class="kpi"><span>Consumo descontado</span><b>${brl(r.totalConsumo)}</b></div>` : ''}
       ${r.totalDescontos > 0 ? `<div class="kpi"><span>Descontos</span><b>${brl(r.totalDescontos)}</b></div>` : ''}
       <div class="kpi destaque"><span>Total a pagar</span><b>${brl(r.totalPagar)}</b></div>
@@ -2103,7 +2105,7 @@ function semanaPadrao() { const dow = new Date().getDay(); return semana(dow ===
 
 function textoRel(r) {
   return `*Taxa de atendimento · ${r.rotulo}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.pagar)}` + (c.consumo > 0 || c.descAplicado > 0 ? ` (gorjeta ${brl(c.valor)}${c.consumo > 0 ? ` − consumo ${brl(c.desconto)}` : ''}${c.descAplicado > 0 ? ` − descontos ${brl(c.descAplicado)}` : ''})` : '')).join('\n') +
-    `\n\nTotal gerado: ${brl(r.totalBruto)}\n` + r.retencoes.filter((x) => x.valor > 0).map((x) => `${x.nome}: ${brl(x.valor)}\n`).join('') +
+    `\n\nTotal gerado: ${brl(r.totalBruto)}\n` + r.retencoes.filter((x) => x.valor > 0).map((x) => `${retRotulo(x)}: ${brl(x.valor)}\n`).join('') +
     (r.totalConsumo > 0 ? `Consumo descontado: ${brl(r.totalConsumo)}\n` : '') + (r.totalDescontos > 0 ? `Descontos: ${brl(r.totalDescontos)}\n` : '') + `*Total a pagar: ${brl(r.totalPagar)}*`;
 }
 $('#rel-copiar').addEventListener('click', async () => {
@@ -2127,7 +2129,7 @@ $('#rel-excel').addEventListener('click', async () => {
   const wb = XLSX.utils.book_new();
   const add = (nome, linhas) => { const ws = XLSX.utils.aoa_to_sheet(linhas); ws['!cols'] = linhas[0].map((_, i) => ({ wch: Math.max(...linhas.map((l) => String(l[i] ?? '').length)) + 2 })); XLSX.utils.book_append_sheet(wb, ws, nome); };
   add('A pagar', [['Colaborador', 'CPF', 'Categoria (dias)', 'Dias', 'Gorjeta (R$)', 'Consumo descontado (R$)', 'Descontos (R$)', 'A receber (R$)', 'Consumo restante (R$)', 'Desconto restante (R$)'], ...r.colaboradores.map((c) => [c.nome, c.cpf || '', catDiasTxt(c), c.dias, c.valor, c.desconto, c.descAplicado, c.pagar, c.pendente, c.pendenteDesc]), ['Total', '', '', '', r.totalLiquido, r.totalConsumo, r.totalDescontos, r.totalPagar, r.totalPendente, r.totalPendenteDesc]]);
-  add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${x.nome} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
+  add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${retRotulo(x)} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
   add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
   await salvarArquivo(`repasse-taxa-${r.arquivo}.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
@@ -2153,8 +2155,8 @@ async function gerarPDF(r, P) {
   const kp = [];
   if (P.cardGerado) kp.push(['TOTAL GERADO', r.totalBruto, false]);
   if (P.cardRetencoes) {
-    if (P.retSeparadas) retsComValor(r).forEach((x) => kp.push([String(x.nome).toUpperCase(), x.valor, false]));
-    else kp.push(['TOTAL RETIDO', r.totalRetido, false]);
+    if (P.retSeparadas) retsComValor(r).forEach((x) => kp.push([retRotulo(x).toUpperCase(), x.valor, false]));
+    else kp.push([`TOTAL RETIDO · ${r.totalBruto ? pctBR(Math.round((r.totalRetido / r.totalBruto) * 10000) / 100) : 0}%`, r.totalRetido, false]);
   }
   if (P.cardPagar && r.totalConsumo > 0) kp.push(['CONSUMO DESCONTADO', r.totalConsumo, false]);
   if (P.cardPagar && r.totalDescontos > 0) kp.push(['DESCONTOS', r.totalDescontos, false]);
