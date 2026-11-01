@@ -246,6 +246,12 @@ td small.desc { display: block; font-size: 12px; color: var(--secundario); font-
 .pendente { color: var(--perigo); }
 .resumo .tag.cat { white-space: normal; text-align: left; }
 .sel-topo { margin: -6px 0 10px; }
+.aplicar-pesos { margin-top: 18px; padding-top: 14px; border-top: 2px dashed var(--tracejado); display: grid; gap: 10px; justify-items: start; }
+.aplicar-pesos .ajuda { margin: 0; }
+.ap-bloco { display: block; margin: 0 0 12px; }
+.ap-cats { display: grid; gap: 6px; }
+.ap-cats small { font-weight: 500; margin-left: 4px; }
+.ap-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .faixa-botoes { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
 .faixa-edicao .faixa-botoes .btn { margin-left: 0; }
 .sel-dia { display: flex; align-items: center; gap: 12px; cursor: pointer; }
@@ -992,6 +998,10 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           </form>
           <p id="c-cats-ajuda" class="ajuda"></p>
           <p id="c-aviso" class="aviso" hidden></p>
+          <div class="aplicar-pesos">
+            <p class="ajuda">Mudar o peso aqui vale só para os próximos lançamentos. Os dias já salvos guardam o peso da época.</p>
+            <button class="btn" id="c-aplicar-pesos" type="button">Atualizar lançamentos salvos com os pesos atuais</button>
+          </div>
         </div>
 
         <div class="painel listrado largo pilha" id="c-pdf">
@@ -2400,6 +2410,38 @@ function somaCats() {
     aj.textContent = `Exemplo com ${brl(1000)} a distribuir e uma pessoa de cada categoria: ` + ex.itens.map((it) => `${it.nome || 'categoria'} ${brl(it.valor)}`).join(' · ') + '.';
   }
 }
+
+/* Atualiza lançamentos salvos com o peso/% atual das categorias escolhidas */
+$('#c-aplicar-pesos').addEventListener('click', async () => {
+  if (sujo) return toast('Salve as configurações primeiro. A atualização usa os pesos já salvos.', true);
+  if (!D.lanc.length) return toast('Ainda não há lançamentos salvos.', true);
+  const cats = cfg().categorias, datas = D.lanc.map((l) => l.data).sort();
+  const E = { ids: new Set(), de: datas[0], ate: datas[datas.length - 1] };
+  const html = `<span class="ap-bloco">Escolha as categorias. Os dias salvos que usam essas categorias serão recalculados com o peso (ou %) que está hoje aqui. O total distribuído do dia não muda; muda quanto cada pessoa recebe.</span>
+    <span class="ap-bloco ap-cats">${cats.map((c) => `<label class="chk"><input type="checkbox" data-apc="${esc(c.id)}">${esc(c.nome)} <small class="muted">peso ${pctBR(pesoDe(c))} · ${pctBR(c.pct)}%</small></label>`).join('')}</span>
+    <span class="ap-bloco ap-datas"><label class="campo"><span>De</span><input type="date" id="ap-de" value="${E.de}"></label><label class="campo"><span>Até</span><input type="date" id="ap-ate" value="${E.ate}"></label></span>
+    <span class="ap-bloco muted" style="font-size:13px">Atenção: se um período já foi pago, mudar os dias dele muda o relatório desse período.</span>`;
+  const p = confirmar('Atualizar lançamentos salvos', html, 'Continuar');
+  $$('[data-apc]').forEach((i) => i.addEventListener('change', () => (i.checked ? E.ids.add(i.dataset.apc) : E.ids.delete(i.dataset.apc))));
+  $('#ap-de').addEventListener('change', (e) => (E.de = e.target.value)); $('#ap-ate').addEventListener('change', (e) => (E.ate = e.target.value));
+  if (!(await p)) return;
+  if (!E.ids.size) return toast('Nenhuma categoria escolhida.', true);
+  let [de, ate] = [E.de || '0000', E.ate || '9999']; if (de > ate) [de, ate] = [ate, de];
+  const novos = [];
+  D.lanc.filter((l) => l.data >= de && l.data <= ate && (l.modo === 'peso' || l.modo === 'categoria')).forEach((l) => {
+    if (!l.colaboradores.some((c) => Calc.catsDe(c).some((id) => E.ids.has(id)))) return;
+    const base = catsUniao(l.categorias);
+    const nc = base.map((k) => { const at = E.ids.has(k.id) && cats.find((x) => x.id === k.id); return at ? { id: k.id, nome: at.nome, pct: Number(at.pct) || 0, peso: pesoDe(at) } : { id: k.id, nome: k.nome, pct: Number(k.pct) || 0, peso: pesoDe(k) }; });
+    const r = Calc.calcular({ valorBruto: l.valorBruto, retencoes: Calc.retDe(l).map((x) => ({ id: x.id, nome: x.nome, pct: x.pct })), colaboradores: l.colaboradores.map((c) => ({ nome: c.nome, categoriaId: c.categoriaId, extras: c.extras || [], consumo: c.consumo })), modo: l.modo, categorias: nc });
+    const mudou = r.itens.some((it, i) => Math.round(it.valor * 100) !== Math.round((Number(l.colaboradores[i].valor) || 0) * 100));
+    if (mudou) novos.push({ ...l, categorias: nc, colaboradores: r.itens, valorRetido: r.valorRetido, valorLiquido: r.valorLiquido, retencoes: r.retencoes, atualizadoEm: new Date().toISOString() });
+  });
+  if (!novos.length) return toast('Nenhum lançamento precisa mudar: os valores já estão com esses pesos.');
+  novos.sort((a, b) => a.data.localeCompare(b.data));
+  if (!(await confirmar(`Recalcular ${novos.length} ${novos.length > 1 ? 'lançamentos' : 'lançamento'}?`, `Dias: <b>${novos.map((l) => dataBR(l.data).slice(0, 5)).join(', ')}</b>.<br><br>O valor de cada pessoa nesses dias será recalculado com os pesos atuais.`, 'Recalcular'))) return;
+  let n = 0; for (const l of novos) { if (await salvarLanc(l)) n++; else break; }
+  if (n) toast(`${n} ${n > 1 ? 'lançamentos atualizados' : 'lançamento atualizado'} com os pesos atuais.`);
+});
 $('#form-cat').addEventListener('submit', (e) => {
   e.preventDefault(); const n = $('#c-nova').value.trim(); if (!n) return;
   if (C.categorias.some((c) => norm(c.nome) === norm(n))) return toast('Essa categoria já existe.', true);
