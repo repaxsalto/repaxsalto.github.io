@@ -2092,7 +2092,6 @@ function renderRel() {
       <div class="kpi"><span>Total gerado</span><b>${brl(r.totalBruto)}</b></div>
       ${retsComValor(r).map((x) => `<div class="kpi"><span>${esc(retRotulo(x))}</span><b>${brl(x.valor)}</b></div>`).join('')}
       ${r.totalConsumo > 0 ? `<div class="kpi"><span>Consumo descontado</span><b>${brl(r.totalConsumo)}</b></div>` : ''}
-      ${r.totalDescontos > 0 ? `<div class="kpi"><span>Descontos</span><b>${brl(r.totalDescontos)}</b></div>` : ''}
       <div class="kpi destaque"><span>Total a pagar</span><b>${brl(r.totalPagar)}</b></div>
     </div>
     <div class="rel-grade">
@@ -2126,7 +2125,7 @@ function semanaPadrao() { const dow = new Date().getDay(); return semana(dow ===
 function textoRel(r) {
   return `*Taxa de atendimento · ${r.rotulo}*\n\n` + r.colaboradores.map((c) => `${c.nome}: ${brl(c.pagar)}` + (c.consumo > 0 || c.descAplicado > 0 ? ` (gorjeta ${brl(c.valor)}${c.consumo > 0 ? ` − consumo ${brl(c.desconto)}` : ''}${c.descAplicado > 0 ? ` − descontos ${brl(c.descAplicado)}` : ''})` : '')).join('\n') +
     `\n\nTotal gerado: ${brl(r.totalBruto)}\n` + r.retencoes.filter((x) => x.valor > 0).map((x) => `${retRotulo(x)}: ${brl(x.valor)}\n`).join('') +
-    (r.totalConsumo > 0 ? `Consumo descontado: ${brl(r.totalConsumo)}\n` : '') + (r.totalDescontos > 0 ? `Descontos: ${brl(r.totalDescontos)}\n` : '') + `*Total a pagar: ${brl(r.totalPagar)}*`;
+    (r.totalConsumo > 0 ? `Consumo descontado: ${brl(r.totalConsumo)}\n` : '') + `*Total a pagar: ${brl(r.totalPagar)}*`;
 }
 $('#rel-copiar').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
@@ -2179,7 +2178,6 @@ async function gerarPDF(r, P) {
     else kp.push([`TOTAL RETIDO · ${r.totalBruto ? pctBR(Math.round((r.totalRetido / r.totalBruto) * 10000) / 100) : 0}%`, r.totalRetido, false]);
   }
   if (P.cardPagar && r.totalConsumo > 0) kp.push(['CONSUMO DESCONTADO', r.totalConsumo, false]);
-  if (P.cardPagar && r.totalDescontos > 0) kp.push(['DESCONTOS', r.totalDescontos, false]);
   if (P.cardPagar) kp.push(['TOTAL A PAGAR', r.totalPagar ?? r.totalLiquido, true]);
   const porLinha = Math.ceil(kp.length / Math.ceil(kp.length / 4 || 1));
   for (let i = 0; i < kp.length; i += porLinha) {
@@ -2195,7 +2193,7 @@ async function gerarPDF(r, P) {
     y += 72;
   }
   if (kp.length) y += 8;
-  const est = { headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { textColor: TINTA, fontSize: 10 }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' }, margin: { left: 40, right: 40 }, rowPageBreak: 'avoid' };
+  const est = { headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { textColor: TINTA, fontSize: 10 }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' }, margin: { left: 40, right: 40 }, rowPageBreak: 'avoid', showFoot: 'lastPage' };
   const titulo = (t) => { if (y > H - 120) { doc.addPage(); y = 50; } doc.setTextColor(...FERR); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(t, 40, y); y += 10; };
   const tabela = (cols, linhas, totais, extra = {}) => {
     const st = {}; cols.forEach((c, i) => { if (c.st) st[i] = { ...c.st }; });
