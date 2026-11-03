@@ -270,6 +270,7 @@ td small.desc { display: block; font-size: 12px; color: var(--secundario); font-
 .lote-corpo { padding: 0 14px 14px; display: grid; gap: 12px; }
 .lote-corpo p { margin: 0; font-size: 13.5px; }
 .lote-campos { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.lote-dias { display: grid; gap: 8px; border: 2px dashed var(--tracejado); background: var(--papel); padding: 10px 12px 12px; }
 .lote-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
 .cat-dias { display: inline-block; white-space: nowrap; margin: 0 10px 2px 0; }
 .cat-dias b { font-variant-numeric: tabular-nums; color: var(--ferrugem-txt); margin-left: 2px; }
@@ -744,18 +745,22 @@ footer.rodape img { width: 150px; height: auto; display: block; }
           <div id="mm-dias" class="dias-mes" role="list"></div>
         </div>
         <details id="mm-lote" class="lote" hidden>
-          <summary>Mudar em todos os dias de uma vez</summary>
+          <summary>Mudar em vários dias de uma vez</summary>
           <div class="lote-corpo">
-            <p class="muted">Escolha a pessoa e o que fazer. Vale para todos os dias desta lista; depois é só salvar.</p>
+            <p class="muted">Escolha os dias, a pessoa e o que fazer. Depois é só salvar.</p>
+            <div class="lote-dias">
+              <div class="grupo-topo"><span class="eyebrow">Dias <b id="lt-n"></b></span><span><button class="link-btn" type="button" id="lt-todos">Marcar todos</button> · <button class="link-btn" type="button" id="lt-nenhum">Desmarcar todos</button></span></div>
+              <div id="lt-dias" class="chips"></div>
+            </div>
             <div class="lote-campos">
               <label class="campo" for="lt-nome"><span>Pessoa</span><input id="lt-nome" list="nomes" placeholder="Nome" autocomplete="off"></label>
               <label class="campo" for="lt-cat"><span>Categoria</span><select id="lt-cat"></select></label>
             </div>
             <div class="lote-acoes">
-              <button class="btn" type="button" data-lote="incluir">Incluir em todos os dias</button>
-              <button class="btn" type="button" data-lote="somar">Somar a categoria onde ela está</button>
+              <button class="btn" type="button" data-lote="incluir">Incluir nos dias marcados</button>
+              <button class="btn" type="button" data-lote="somar">Somar a categoria</button>
               <button class="btn" type="button" data-lote="trocar">Trocar a categoria principal</button>
-              <button class="btn perigo" type="button" data-lote="tirar">Tirar de todos os dias</button>
+              <button class="btn perigo" type="button" data-lote="tirar">Tirar dos dias marcados</button>
             </div>
           </div>
         </details>
@@ -1832,6 +1837,16 @@ function renderMensal() {
 }
 
 
+let loteFora = new Set(); // ids dos dias desmarcados no painel (o padrão é todos marcados)
+function diasLoteM() {
+  [...loteFora].forEach((id) => { if (!M.dias.some((d) => d.id === id)) loteFora.delete(id); });
+  const n = M.dias.filter((d) => !loteFora.has(d.id)).length;
+  $('#lt-n').textContent = `${n}/${M.dias.length}`;
+  $('#lt-dias').innerHTML = M.dias.map((d) => { const on = !loteFora.has(d.id); return `<button type="button" class="chip dia${on ? ' on' : ''}" data-lt="${esc(d.id)}" aria-pressed="${on}">${d.data ? `${diaSem(d.data).slice(0, 3)} ${dataBR(d.data).slice(0, 5)}` : 'sem data'}</button>`; }).join('');
+  $$('#lt-dias [data-lt]').forEach((b) => b.addEventListener('click', () => { const id = b.dataset.lt; if (loteFora.has(id)) loteFora.delete(id); else loteFora.add(id); diasLoteM(); }));
+}
+$('#lt-todos').addEventListener('click', () => { loteFora.clear(); diasLoteM(); });
+$('#lt-nenhum').addEventListener('click', () => { loteFora = new Set(M.dias.map((d) => d.id)); diasLoteM(); });
 function modoTelaM() {
   const ed = emEdicao();
   $('#mm-eyebrow').textContent = ed ? 'Acompanhar' : 'Lançar';
@@ -1845,6 +1860,7 @@ function modoTelaM() {
   $('#mm-h2').firstChild.textContent = ed ? 'Dias em edição ' : 'Relatórios ';
   $('#mm-tirar').textContent = ed ? 'Tirar da edição' : 'Tirar este dia';
   $('#mm-lote').hidden = M.dias.length < 2;
+  diasLoteM();
   const cats = new Map(); M.dias.forEach((d) => regrasM(d).categorias.forEach((c) => cats.set(c.id, c))); cfg().categorias.forEach((c) => { if (!cats.has(c.id)) cats.set(c.id, c); });
   const sel = $('#lt-cat').value; $('#lt-cat').innerHTML = opcoesCat(cats.has(sel) ? sel : [...cats.keys()][0], [...cats.values()]);
 }
@@ -1863,18 +1879,22 @@ $$('[data-lote]').forEach((b) => b.addEventListener('click', async () => {
   if (!nome) { $('#lt-nome').focus(); return toast('Escreva o nome da pessoa.', true); }
   const m = D.equipe.find((x) => norm(x.nome) === norm(nome)), nm = m ? m.nome : nome, nomeC = $('#lt-cat').selectedOptions[0]?.textContent || '';
   const achar = (d) => d.equipe.find((x) => norm(x.nome) === norm(nm));
-  const txt = { incluir: `Incluir <b>${esc(nm)}</b> como ${esc(nomeC)} em todos os dias em que ainda não está?`, somar: `Somar a categoria <b>${esc(nomeC)}</b> para ${esc(nm)} em todos os dias em que ela está?`, trocar: `Trocar a categoria principal de <b>${esc(nm)}</b> para ${esc(nomeC)} em todos os dias em que ela está?`, tirar: `Tirar <b>${esc(nm)}</b> de todos os dias desta lista?` }[acao];
-  if (!(await confirmar('Mudar em todos os dias', txt + '<br><br>Nada é salvo até você tocar em Salvar.', 'Aplicar'))) return;
-  let n = 0;
-  M.dias.forEach((d) => {
+  const alvo = M.dias.filter((d) => !loteFora.has(d.id));
+  if (!alvo.length) return toast('Marque pelo menos um dia.', true);
+  const qd = alvo.length === M.dias.length ? 'em todos os dias' : `em ${alvo.length === 1 ? '1 dia' : alvo.length + ' dias'} (${alvo.map((d) => dataBR(d.data).slice(0, 5)).join(', ')})`;
+  const txt = { incluir: `Incluir <b>${esc(nm)}</b> como ${esc(nomeC)} ${qd}? (Onde já está, nada muda.)`, somar: `Somar a categoria <b>${esc(nomeC)}</b> para ${esc(nm)} ${qd}? (Só nos dias em que a pessoa trabalhou.)`, trocar: `Trocar a categoria principal de <b>${esc(nm)}</b> para ${esc(nomeC)} ${qd}?`, tirar: `Tirar <b>${esc(nm)}</b> ${qd.replace(/^em /, 'de ')}?` }[acao];
+  if (!(await confirmar('Mudar em vários dias', txt + '<br><br>Nada é salvo até você tocar em Salvar.', 'Aplicar'))) return;
+  let n = 0, semPessoa = 0;
+  alvo.forEach((d) => {
     const c = achar(d), temCat = regrasM(d).categorias.some((k) => k.id === cat);
     if (acao === 'incluir' && !c && temCat) { d.equipe.push({ nome: nm, categoriaId: cat, extras: [], tipo: m ? tipoDe(m) : 'diarista' }); n++; mexeu(d); }
     if (acao === 'tirar' && c) { d.equipe.splice(d.equipe.indexOf(c), 1); n++; mexeu(d); }
     if (acao === 'somar' && c && temCat && !Calc.catsDe(c).includes(cat)) { c.extras = [...(c.extras || []), cat]; n++; mexeu(d); }
     if (acao === 'trocar' && c && temCat && c.categoriaId !== cat) { c.categoriaId = cat; c.extras = (c.extras || []).filter((x) => x !== cat); n++; mexeu(d); }
+    if ((acao === 'somar' || acao === 'trocar') && !c) semPessoa++;
   });
   guardarM(); renderMensal();
-  toast(n ? `Mudança feita em ${n} ${n > 1 ? 'dias' : 'dia'}. Confira e toque em Salvar.` : 'Nenhum dia precisou mudar.', !n);
+  toast((n ? `Mudança feita em ${n} ${n > 1 ? 'dias' : 'dia'}. Confira e toque em Salvar.` : 'Nenhum dia precisou mudar.') + (semPessoa ? ` ${nm} não trabalhou em ${semPessoa} dos dias marcados; use "Incluir" para colocar.` : ''), !n);
 }));
 
 $('#mm-salvar').addEventListener('click', async () => {
