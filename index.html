@@ -2153,9 +2153,20 @@ $('#rel-excel').addEventListener('click', async () => {
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
   await salvarArquivo(`repasse-taxa-${r.arquivo}.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
 });
+// Gera o PDF em alguns tamanhos (k = escala de letra e espaçamento das tabelas) e fica com o
+// maior tamanho que usa o menor número de páginas: evita uma última página com poucas linhas.
 async function gerarPDF(r, P) {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  let melhor = null;
+  for (const k of [1, 0.94, 0.88, 0.82, 0.76]) {
+    const doc = montarPDF(r, P, k), n = doc.internal.getNumberOfPages();
+    if (!melhor || n < melhor.n) melhor = { doc, n };
+    if (n === 1) break;
+  }
+  return melhor.doc;
+}
+function montarPDF(r, P, k = 1) {
   P = { ...PDF_PADRAO, ...(P || {}) };
   const comConsumo = r.totalConsumo > 0 || r.totalPendente > 0, comDesc = !!P.colDescontos;
   const nCols = 1 + !!P.colCpf + !!P.colCategoria + !!P.colDias + (comConsumo || comDesc ? 2 + comConsumo + comDesc : 1) + !!P.colAssinatura;
@@ -2193,7 +2204,8 @@ async function gerarPDF(r, P) {
     y += 72;
   }
   if (kp.length) y += 8;
-  const est = { headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 }, bodyStyles: { textColor: TINTA, fontSize: 10 }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' }, margin: { left: 40, right: 40 }, rowPageBreak: 'avoid', showFoot: 'lastPage' };
+  const pad = { top: 5 * k, bottom: 5 * k, left: 5, right: 5 };
+  const est = { styles: { cellPadding: pad }, headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 8 * k }, bodyStyles: { textColor: TINTA, fontSize: 10 * k }, alternateRowStyles: { fillColor: [244, 234, 216] }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold', fontSize: 10 * k }, margin: { left: 40, right: 40, top: 40, bottom: 44 }, rowPageBreak: 'avoid', showFoot: 'lastPage' };
   const titulo = (t) => { if (y > H - 120) { doc.addPage(); y = 50; } doc.setTextColor(...FERR); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(t, 40, y); y += 10; };
   const tabela = (cols, linhas, totais, extra = {}) => {
     const st = {}; cols.forEach((c, i) => { if (c.st) st[i] = { ...c.st }; });
@@ -2233,8 +2245,8 @@ async function gerarPDF(r, P) {
     const iAss = cols.length;
     if (P.colAssinatura) cols.push({ h: 'ASSINATURA', v: () => '', st: { cellWidth: deitado ? 150 : 120 } });
     const assinaturaLinha = (d) => { if (d.section === 'body' && d.column.index === iAss) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6); } };
-    const fs = 9.5;
-    tabela(cols, r.colaboradores, r, { bodyStyles: { textColor: TINTA, fontSize: fs, minCellHeight: 28 }, headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 7 }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold', fontSize: fs }, ...(P.colAssinatura ? { didDrawCell: assinaturaLinha } : {}) });
+    const fs = 9.5 * Math.max(k, 0.85);
+    tabela(cols, r.colaboradores, r, { bodyStyles: { textColor: TINTA, fontSize: fs, minCellHeight: 28 * k }, headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 7 * Math.max(k, 0.9) }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold', fontSize: fs }, ...(P.colAssinatura ? { didDrawCell: assinaturaLinha } : {}) });
     if (r.totalPendenteDesc > 0) {
       const pend = r.colaboradores.filter((c) => c.pendenteDesc > 0).map((c) => `${c.nome} ${brl(c.pendenteDesc)}`).join('; ');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SEC);
