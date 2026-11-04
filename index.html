@@ -2160,7 +2160,7 @@ $('#rel-excel').addEventListener('click', async () => {
   add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${retRotulo(x)} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
   add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
-  await salvarArquivo(`repasse-taxa-${r.arquivo}.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+  await salvarArquivo(`repasse-taxa-saltodasnuvens-${r.arquivo}.xlsx`, XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
 });
 // Gera o PDF em alguns tamanhos (k = escala de letra e espaçamento das tabelas) e fica com o
 // maior tamanho que usa o menor número de páginas: evita uma última página com poucas linhas.
@@ -2301,7 +2301,7 @@ function montarPDF(r, P, k = 1) {
 $('#rel-pdf').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
   let doc; try { doc = await gerarPDF(r, cfg().pdf); } catch { return toast('Não consegui preparar o PDF. Tente de novo.', true); }
-  salvarArquivo(`repasse-taxa-${r.arquivo}.pdf`, doc.output('arraybuffer'));
+  salvarArquivo(`repasse-taxa-saltodasnuvens-${r.arquivo}.pdf`, doc.output('arraybuffer'));
 });
 $('#rel-ajustar').addEventListener('click', () => { irPara('config'); setTimeout(() => $('#c-pdf').scrollIntoView({ behavior: 'smooth', block: 'start' }), 60); });
 
