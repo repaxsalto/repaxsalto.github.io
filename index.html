@@ -246,6 +246,7 @@ td small.desc { display: block; font-size: 12px; color: var(--secundario); font-
 .pendente { color: var(--perigo); }
 .resumo .tag.cat { white-space: normal; text-align: left; }
 .sel-topo { margin: -6px 0 10px; }
+.nota-ld { font-size: 13.5px; margin: 12px 0 0; padding: 10px 12px; border-left: 4px solid var(--dourado); background: var(--celula); }
 .aplicar-pesos { margin-top: 18px; padding-top: 14px; border-top: 2px dashed var(--tracejado); display: grid; gap: 10px; justify-items: start; }
 .aplicar-pesos .ajuda { margin: 0; }
 .ap-bloco { display: block; margin: 0 0 12px; }
@@ -2047,8 +2048,14 @@ function dadosRel() {
     return { ...c, cpf: cpfFmt(cpfDe(c.nome)), descontos: des / 100, descAplicado: usa / 100, pagar: (ct(c.pagar) - usa) / 100, pendenteDesc: (des - usa) / 100 };
   });
   rel.totalDescontos = ap / 100; rel.totalPendenteDesc = pend / 100; rel.totalPagar = (ct(rel.totalPagar) - ap) / 100;
+  // Linha "Limpeza Diaristas": dias em que a categoria foi usada (nenhum fixo limpou os banheiros)
+  const ehLD = (t) => /limpeza\s+diaristas?/i.test(String(t || ''));
+  const diasLD = [...new Set(l.filter((x) => x.colaboradores.some((c) => ehLD(c.categoria) || ehLD(c.nome))).map((x) => x.data))].sort();
+  rel.colaboradores = rel.colaboradores.map((c) => ({ ...c, limpezaDiaristas: ehLD(c.nome) || /^\s*limpeza\s+diaristas?\s*$/i.test(c.categoria || '') }));
+  rel.limpezaDiaristas = rel.colaboradores.some((c) => c.limpezaDiaristas) ? { dias: diasLD } : null;
   return { ...p, qtd: l.length, chaveDesc: chave, ...rel };
 }
+const textoLD = (r) => `Limpeza Diaristas: o valor desta linha vem dos dias em que nenhum colaborador fixo fez a limpeza dos banheiros. Nesses dias, a parte da limpeza é direcionada aos diaristas que fizeram a limpeza. Dias considerados (${r.limpezaDiaristas.dias.length}): ${r.limpezaDiaristas.dias.map((d) => dataBR(d).slice(0, 5)).join(', ')}. Esta linha é assinada pelo Gerente ou pelo Responsável pela limpeza, que atesta que os dias acima estão corretos e que, nesses dias, nenhum colaborador fixo realizou a limpeza.`;
 async function salvarDesconto(chave, nome, valor) {
   const tudo = JSON.parse(JSON.stringify(D.descontos || {})), t = tudo[chave] || {}, k = chaveNome(nome);
   if (valor > 0) t[k] = Math.round(valor * 100) / 100; else delete t[k];
@@ -2097,10 +2104,11 @@ function renderRel() {
     <div class="rel-grade">
       <div class="painel listrado"><h2>A pagar por colaborador</h2><p class="muted" style="margin:-8px 0 12px">${esc(r.rotulo)} · ${r.dias.length} ${r.dias.length === 1 ? 'dia lançado' : 'dias lançados'}</p>
         <div class="rolagem"><table class="t-pagar"><thead><tr><th>Colaborador</th><th class="so-desk">Categoria · dias</th><th class="num">Dias</th><th class="num">Descontos</th><th class="num">Recebe</th></tr></thead><tbody>
-        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}</b>${c.cpf ? `<small class="cpf">CPF ${esc(c.cpf)}</small>` : ''}<small class="so-cel">${esc(catDiasTxt(c))}</small></td><td class="so-desk">${(c.categoriasDias || []).map((x) => `<span class="cat-dias">${esc(x.nome)} <b>${x.dias}</b></span>`).join('') || esc(c.categoria)}</td><td class="num c-dias">${c.dias}</td>
+        ${r.colaboradores.map((c) => `<tr><td><b>${esc(c.nome)}${c.limpezaDiaristas ? ' *' : ''}</b>${c.limpezaDiaristas ? '<small class="cpf">Assina: Gerente ou Responsável pela limpeza</small>' : ''}${c.cpf ? `<small class="cpf">CPF ${esc(c.cpf)}</small>` : ''}<small class="so-cel">${esc(catDiasTxt(c))}</small></td><td class="so-desk">${(c.categoriasDias || []).map((x) => `<span class="cat-dias">${esc(x.nome)} <b>${x.dias}</b></span>`).join('') || esc(c.categoria)}</td><td class="num c-dias">${c.dias}</td>
           <td class="num c-desc"><label class="desc-in"><span>R$</span><input data-desc="${esc(c.nome)}" inputmode="decimal" placeholder="0,00" value="${c.descontos > 0 ? num2(c.descontos) : ''}" aria-label="Descontos de ${esc(c.nome)}"></label></td>
           <td class="num"><span class="valor">${brl(c.pagar)}</span>${c.consumo > 0 || c.descAplicado > 0 ? `<small class="desc">gorjeta ${brl(c.valor)}</small>` : ''}${c.consumo > 0 ? `<small class="desc">consumo − ${brl(c.desconto)}</small>` : ''}${c.descAplicado > 0 ? `<small class="desc">descontos − ${brl(c.descAplicado)}</small>` : ''}${c.pendente > 0 ? `<small class="desc pendente">consumo restante ${brl(c.pendente)}</small>` : ''}${c.pendenteDesc > 0 ? `<small class="desc pendente">desconto restante ${brl(c.pendenteDesc)}</small>` : ''}</td></tr>`).join('')}
         <tr class="total"><td>Total</td><td class="so-desk"></td><td></td><td class="num c-desc">${r.totalDescontos > 0 ? '− ' + brl(r.totalDescontos) : brl(0)}</td><td class="num"><span class="valor">${brl(r.totalPagar)}</span></td></tr></tbody></table></div>
+        ${r.limpezaDiaristas ? `<p class="nota-ld">* ${esc(textoLD(r))}</p>` : ''}
         <p class="muted" style="font-size:13px;margin:10px 0 0">Descontos valem só para este período (${esc(r.rotulo)}). O valor sai da gorjeta da pessoa, depois do consumo.</p>
         ${r.totalPendenteDesc > 0 ? `<p class="aviso" style="margin-top:12px">Há descontos maiores que o valor a receber (${brl(r.totalPendenteDesc)}). Essa parte não foi descontada aqui.</p>` : ''}
         ${r.totalPendente > 0 ? `<p class="aviso" style="margin-top:12px">Há consumo maior que a gorjeta do período (${brl(r.totalPendente)}). Esse valor não foi descontado; desconte no próximo pagamento ou na folha.</p>` : ''}</div>
@@ -2148,6 +2156,7 @@ $('#rel-excel').addEventListener('click', async () => {
   const wb = XLSX.utils.book_new();
   const add = (nome, linhas) => { const ws = XLSX.utils.aoa_to_sheet(linhas); ws['!cols'] = linhas[0].map((_, i) => ({ wch: Math.max(...linhas.map((l) => String(l[i] ?? '').length)) + 2 })); XLSX.utils.book_append_sheet(wb, ws, nome); };
   add('A pagar', [['Colaborador', 'CPF', 'Categoria (dias)', 'Dias', 'Gorjeta (R$)', 'Consumo descontado (R$)', 'Descontos (R$)', 'A receber (R$)', 'Consumo restante (R$)', 'Desconto restante (R$)'], ...r.colaboradores.map((c) => [c.nome, c.cpf || '', catDiasTxt(c), c.dias, c.valor, c.desconto, c.descAplicado, c.pagar, c.pendente, c.pendenteDesc]), ['Total', '', '', '', r.totalLiquido, r.totalConsumo, r.totalDescontos, r.totalPagar, r.totalPendente, r.totalPendenteDesc]]);
+  if (r.limpezaDiaristas) XLSX.utils.sheet_add_aoa(wb.Sheets['A pagar'], [[], ['* ' + textoLD(r)]], { origin: -1 });
   add('Resumo', [['Período', r.rotulo], ['Total gerado (R$)', r.totalBruto], ...r.retencoes.map((x) => [`${retRotulo(x)} (R$)`, x.valor]), ['Total retido (R$)', r.totalRetido], ['Total a pagar (R$)', r.totalLiquido]]);
   add('Por dia', [['Data', 'Gerado (R$)', ...r.retencoes.map((x) => `${x.nome} (R$)`), 'Total retido (R$)', 'Distribuído (R$)', 'Pessoas'],
     ...r.dias.map((d) => [dataBR(d.data), d.valorBruto, ...r.retencoes.map((x) => (d.retencoes.find((z) => z.id === x.id) || {}).valor || 0), d.valorRetido, d.valorLiquido, d.pessoas])]);
@@ -2217,7 +2226,7 @@ function montarPDF(r, P, k = 1) {
       const w = Math.max(mede(c.h, fsH, true), ...linhas.map((l) => mede(c.v(l), fsB, c.st.fontStyle === 'bold')), c.t ? mede(c.t(totais), fsF, true) : 0);
       st[i].cellWidth = Math.ceil(w) + 12;
     });
-    doc.autoTable({ ...est, ...extra, startY: y, head: [cols.map((c) => c.h)], body: linhas.map((l) => cols.map((c) => c.v(l))), foot: [cols.map((c, i) => (i === 0 ? 'TOTAL' : c.t ? c.t(totais) : ''))], columnStyles: st,
+    doc.autoTable({ ...est, ...extra, startY: y, head: [cols.map((c) => c.h)], body: linhas.map((l) => { const b = cols.map((c) => c.v(l)); if (l && l.limpezaDiaristas) b.__ld = true; return b; }), foot: [cols.map((c, i) => (i === 0 ? 'TOTAL' : c.t ? c.t(totais) : ''))], columnStyles: st,
       didParseCell: (d) => { const a = cols[d.column.index]?.st?.halign; if (a && d.section !== 'body') d.cell.styles.halign = a; } });
     y = doc.lastAutoTable.finalY + 28;
   };
@@ -2232,7 +2241,7 @@ function montarPDF(r, P, k = 1) {
   if (P.tabColab) {
     titulo('VALOR A RECEBER POR COLABORADOR');
     y += 4; textoLivre();
-    const cols = [{ h: 'COLABORADOR', v: (c) => c.nome, st: { minCellWidth: 120 } }], fixo = { cellWidth: 'wrap' }, dirFixo = { halign: 'right', cellWidth: 'wrap' };
+    const cols = [{ h: 'COLABORADOR', v: (c) => c.nome + (c.limpezaDiaristas ? ' *' : ''), st: { minCellWidth: 120 } }], fixo = { cellWidth: 'wrap' }, dirFixo = { halign: 'right', cellWidth: 'wrap' };
     if (P.colCpf) cols.push({ h: 'CPF', v: (c) => c.cpf || '', st: fixo });
     if (P.colCategoria) cols.push({ h: P.colCatDias ? 'CATEGORIA (DIAS)' : 'CATEGORIA', v: (c) => (P.colCatDias ? catDiasTxt(c, '\n') : c.categoria), st: { cellWidth: 'wrap' } });
     if (P.colDias) cols.push({ h: 'DIAS', v: (c) => String(c.dias), st: dirFixo });
@@ -2244,9 +2253,19 @@ function montarPDF(r, P, k = 1) {
     } else cols.push({ h: 'VALOR', v: (c) => brl(c.valor), t: () => brl(r.totalLiquido), st: { ...dirFixo, fontStyle: 'bold' } });
     const iAss = cols.length;
     if (P.colAssinatura) cols.push({ h: 'ASSINATURA', v: () => '', st: { cellWidth: deitado ? 150 : 120 } });
-    const assinaturaLinha = (d) => { if (d.section === 'body' && d.column.index === iAss) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6); } };
+    const assinaturaLinha = (d) => {
+      if (d.section !== 'body' || d.column.index !== iAss) return;
+      doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.line(d.cell.x + 8, d.cell.y + d.cell.height - 6, d.cell.x + d.cell.width - 8, d.cell.y + d.cell.height - 6);
+      if (d.row.raw && d.row.raw.__ld) { doc.setFont('helvetica', 'italic'); doc.setFontSize(6.5); doc.setTextColor(...SEC); doc.text('Gerente ou Resp. pela limpeza', d.cell.x + 8, d.cell.y + 9); }
+    };
     const fs = 9.5 * Math.max(k, 0.85);
     tabela(cols, r.colaboradores, r, { bodyStyles: { textColor: TINTA, fontSize: fs, minCellHeight: 28 * k }, headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 7 * Math.max(k, 0.9) }, footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold', fontSize: fs }, ...(P.colAssinatura ? { didDrawCell: assinaturaLinha } : {}) });
+    if (r.limpezaDiaristas) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...TINTA);
+      const ln = doc.splitTextToSize('* ' + textoLD(r), W - 80);
+      if (y - 16 + ln.length * 11 > H - 50) { doc.addPage(); y = 66; }
+      doc.text(ln, 40, y - 16, { lineHeightFactor: 1.3 }); y += ln.length * 11 + 4;
+    }
     if (r.totalPendenteDesc > 0) {
       const pend = r.colaboradores.filter((c) => c.pendenteDesc > 0).map((c) => `${c.nome} ${brl(c.pendenteDesc)}`).join('; ');
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...SEC);
