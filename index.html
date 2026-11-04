@@ -2320,95 +2320,106 @@ function montarPDF(r, P, k = 1) {
 
 /* Recibo individual: uma página por colaborador, só com os valores dele, explicando
    o valor dia a dia (categorias, quanto foi distribuído, a parte dele e quanto recebeu). */
+/* Recibo individual: dois por folha A4 (meia página cada, com linha de corte). Quem tem
+   muitos dias/categorias e não cabe em meia página ganha a página inteira. Sem pesos. */
 async function gerarRecibos(r, P, lista) {
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
   await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
   P = { ...PDF_PADRAO, ...(P || {}) };
   const novoDoc = () => new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
-  const doc = novoDoc();
-  lista.forEach((c, i) => {
-    // escolhe a maior escala em que o recibo inteiro (com a assinatura) cabe em uma página
-    let k = 0.7;
-    for (const t of [1, 0.93, 0.86, 0.8, 0.74, 0.7]) { const tmp = novoDoc(); desenharRecibo(tmp, r, P, c, t); if (tmp.internal.getNumberOfPages() === 1) { k = t; break; } }
-    if (i) doc.addPage();
-    desenharRecibo(doc, r, P, c, k);
+  const doc = novoDoc(), H = doc.internal.pageSize.getHeight(), W = doc.internal.pageSize.getWidth(), meia = H / 2;
+  // escolhe a maior escala em que o recibo cabe na altura dada
+  const escala = (c, h) => { for (const k of [1, 0.93, 0.86, 0.8, 0.74]) { const t = novoDoc(); if (desenharRecibo(t, r, P, c, k, 0, h) && t.internal.getNumberOfPages() === 1) return k; } return null; };
+  let pos = 0; // 0 = página vazia, 1 = metade de cima ocupada
+  let primeira = true;
+  lista.forEach((c) => {
+    const k = escala(c, meia);
+    if (k != null) {
+      if (!primeira && pos === 0) doc.addPage();
+      const y0 = pos * meia;
+      if (pos === 1) { doc.setDrawColor(95, 73, 55); doc.setLineWidth(.5); doc.setLineDashPattern([4, 3], 0); doc.line(14, meia, W - 14, meia); doc.setLineDashPattern([], 0); doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(95, 73, 55); doc.text('corte aqui', W - 14, meia - 3, { align: 'right' }); }
+      desenharRecibo(doc, r, P, c, k, y0, meia);
+      pos = pos === 0 ? 1 : 0;
+    } else {
+      if (!primeira) doc.addPage();
+      desenharRecibo(doc, r, P, c, escala(c, H) || 0.74, 0, H);
+      pos = 0;
+    }
+    primeira = false;
   });
-  const H = doc.internal.pageSize.getHeight(), n = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(7.5); doc.setTextColor(95, 73, 55); doc.setFont('helvetica', 'normal'); doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, 40, H - 22); }
   return doc;
 }
-function desenharRecibo(doc, r, P, c, k) {
-  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+// Desenha um recibo na faixa [y0, y0+h]. Devolve false se o conteúdo não coube.
+function desenharRecibo(doc, r, P, c, k, y0, h) {
+  const W = doc.internal.pageSize.getWidth();
   const TERRA = [36, 30, 25], FERR = [169, 68, 44], DOUR = [230, 164, 61], CREME = [255, 245, 229], TINTA = [56, 33, 24], SEC = [95, 73, 55], LINHA = [222, 205, 180];
-  const M = 40, bw = W - 2 * M;
-  const cabecalho = () => {
-    doc.setFillColor(...TERRA); doc.rect(0, 0, W, 70, 'F'); doc.setFillColor(...FERR); doc.rect(0, 0, W, 5, 'F');
-    let tx = M;
-    if (P.logo) { try { doc.addImage(SOL, 'PNG', M, 16, 38, 38); tx = M + 50; } catch {} }
-    doc.setTextColor(...DOUR); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text('SALTO DAS NUVENS · TAXA DE ATENDIMENTO', tx, 32);
-    doc.setTextColor(...CREME); doc.setFontSize(17); doc.text('RECIBO INDIVIDUAL', tx, 52);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text(r.rotulo, W - M, 48, { align: 'right' });
-  };
-  const precisa = (y, h) => { if (y + h > H - 40) { doc.addPage(); cabecalho(); return 96; } return y; };
-  const texto = (t, y, fs = 9, cor = TINTA, estilo = 'normal') => { fs *= k; doc.setFont('helvetica', estilo); doc.setFontSize(fs); doc.setTextColor(...cor); const l = doc.splitTextToSize(t, bw); y = precisa(y, l.length * fs * 1.3); doc.text(l, M, y, { lineHeightFactor: 1.3 }); return y + l.length * fs * 1.3; };
-  cabecalho();
-  let y = 96 + 4 * k;
-  doc.setTextColor(...TINTA); doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text(c.nome, M, y);
-  y = texto([c.cpf ? `CPF ${c.cpf}` : '', `${c.dias} ${c.dias === 1 ? 'dia' : 'dias'} trabalhados no período`].filter(Boolean).join('   ·   '), y + 15, 9.5, SEC);
-  // resumo de valores
-  y += 6 * k;
+  const M = 32, bw = W - 2 * M, fim = y0 + h - 18, pg0 = doc.internal.getNumberOfPages();
+  const texto = (t, y, fs, cor = TINTA, estilo = 'normal') => { fs *= k; doc.setFont('helvetica', estilo); doc.setFontSize(fs); doc.setTextColor(...cor); const l = doc.splitTextToSize(t, bw); doc.text(l, M, y + fs * 0.85, { lineHeightFactor: 1.25 }); return y + l.length * fs * 1.25; };
+  // cabeçalho
+  let y = y0 + 16;
+  doc.setFillColor(...TERRA); doc.rect(M, y, bw, 30, 'F'); doc.setFillColor(...FERR); doc.rect(M, y, bw, 2.5, 'F');
+  let tx = M + 10;
+  if (P.logo) { try { doc.addImage(SOL, 'PNG', M + 7, y + 5, 21, 21); tx = M + 34; } catch {} }
+  doc.setTextColor(...DOUR); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.text('SALTO DAS NUVENS · TAXA DE ATENDIMENTO', tx, y + 13);
+  doc.setTextColor(...CREME); doc.setFontSize(11); doc.text('RECIBO INDIVIDUAL', tx, y + 25);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(r.rotulo, M + bw - 10, y + 20, { align: 'right' });
+  y += 40;
+  // pessoa + valores lado a lado
+  doc.setTextColor(...TINTA); doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5 * k); doc.text(c.nome, M, y + 10 * k);
+  y += 14 * k;
+  y = texto([c.cpf ? `CPF ${c.cpf}` : '', `${c.dias} ${c.dias === 1 ? 'dia' : 'dias'} trabalhados no período`].filter(Boolean).join('   ·   '), y, 8, SEC) + 5;
   const lin = [['Gorjeta do período (soma dos dias abaixo)', brl(c.valor)]];
   if (c.desconto > 0) lin.push(['Consumo descontado', '- ' + brl(c.desconto)]);
   if (c.descAplicado > 0) lin.push(['Descontos', '- ' + brl(c.descAplicado)]);
-  lin.forEach(([a1, b1]) => { doc.setDrawColor(...LINHA); doc.setLineWidth(.6); doc.line(M, y + 6, M + bw, y + 6); doc.setTextColor(...TINTA); doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5 * k); doc.text(a1, M, y); doc.text(b1, M + bw, y, { align: 'right' }); y += 18 * k; });
-  doc.setFillColor(...FERR); doc.rect(M, y - 4, bw, 26, 'F'); doc.setTextColor(...CREME); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text('A RECEBER', M + 10, y + 13); doc.setFontSize(15); doc.text(brl(c.pagar), M + bw - 10, y + 14, { align: 'right' });
-  y += 38 * k + 4;
-  if (c.pendente > 0) y = texto(`Consumo maior que a gorjeta, não descontado aqui: ${brl(c.pendente)}.`, y, 8.5, SEC);
-  if (c.pendenteDesc > 0) y = texto(`Descontos maiores que o valor a receber, não descontados aqui: ${brl(c.pendenteDesc)}.`, y, 8.5, SEC);
-  // como chegamos neste valor
-  y = precisa(y + 4 * k, 40);
-  doc.setTextColor(...FERR); doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5 * k); doc.text('COMO CHEGAMOS NESTE VALOR', M, y); y += 14 * k;
+  lin.forEach(([a1, b1]) => { doc.setFont('helvetica', 'normal'); doc.setFontSize(9 * k); doc.setTextColor(...TINTA); doc.text(a1, M, y + 8 * k); doc.text(b1, M + bw, y + 8 * k, { align: 'right' }); doc.setDrawColor(...LINHA); doc.setLineWidth(.5); doc.line(M, y + 11 * k, M + bw, y + 11 * k); y += 14 * k; });
+  y += 2;
+  doc.setFillColor(...FERR); doc.rect(M, y, bw, 20, 'F'); doc.setTextColor(...CREME); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.text('A RECEBER', M + 8, y + 13.5); doc.setFontSize(12.5); doc.text(brl(c.pagar), M + bw - 8, y + 14.5, { align: 'right' });
+  y += 26;
+  if (c.pendente > 0) y = texto(`Consumo maior que a gorjeta, não descontado aqui: ${brl(c.pendente)}.`, y, 7.3, SEC);
+  if (c.pendenteDesc > 0) y = texto(`Descontos maiores que o valor a receber, não descontados aqui: ${brl(c.pendenteDesc)}.`, y, 7.3, SEC);
+  // como chegamos neste valor (sem pesos)
+  doc.setTextColor(...FERR); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5 * k); doc.text('COMO CHEGAMOS NESTE VALOR', M, y + 8 * k); y += 11 * k;
   const modos = new Set(c.detalhe.map((d) => d.modo));
-  const expl = modos.has('peso')
-    ? 'Em cada dia, o valor distribuído (o que o dia gerou, menos as retenções) é dividido entre quem trabalhou de acordo com o peso de cada um. Seu peso no dia é a soma dos pesos das categorias que você fez naquele dia. Sua parte = valor distribuído × seu peso ÷ soma dos pesos de todos que trabalharam.'
-    : modos.has('categoria') ? 'Em cada dia, cada categoria recebe sua porcentagem do valor distribuído (o que o dia gerou, menos as retenções), dividida entre quem fez aquela categoria. Quem fez mais de uma categoria recebe a parte de cada uma.'
-    : 'Em cada dia, o valor distribuído (o que o dia gerou, menos as retenções) é dividido em partes iguais entre quem trabalhou.';
-  y = texto(expl, y, 9, TINTA) + 5 * k;
-  if (c.porCat.length) {
-    y = texto('Dias em cada categoria:', y, 9.5, TINTA, 'bold') + 2;
-    c.porCat.forEach((q) => { y = texto(`${q.nome} (${q.datas.length} ${q.datas.length === 1 ? 'dia' : 'dias'}): ${q.datas.map((d) => dataBR(d).slice(0, 5)).join(', ')}`, y, 9, TINTA) + 2; });
-  }
-  if (c.limpezaDiaristas && r.limpezaDiaristas) y = texto(textoLD(r).replace('o valor desta linha', 'o valor deste recibo').replace('Esta linha é assinada', 'Este recibo é assinado'), y + 3, 8.5, SEC);
-  y += 6 * k;
+  const expl = modos.has('igual') && modos.size === 1
+    ? 'Em cada dia, o valor da taxa (menos as retenções) foi dividido em partes iguais entre quem trabalhou. O seu valor é a soma do que você recebeu em cada dia, mostrado abaixo.'
+    : 'Em cada dia, o valor da taxa (menos as retenções) foi dividido entre quem trabalhou, conforme as categorias que cada um fez naquele dia. Quem fez mais de uma categoria no dia recebe pelas categorias somadas. O seu valor é a soma do que você recebeu em cada dia, mostrado abaixo.';
+  y = texto(expl, y, 7.4, TINTA) + 3;
+  if (c.porCat.length > 1) c.porCat.forEach((q) => { y = texto(`${q.nome} (${q.datas.length} ${q.datas.length === 1 ? 'dia' : 'dias'}): ${q.datas.map((d) => dataBR(d).slice(0, 5)).join(', ')}`, y, 7.2, TINTA) + 1; });
+  if (c.limpezaDiaristas && r.limpezaDiaristas) y = texto(textoLD(r).replace('o valor desta linha', 'o valor deste recibo').replace('Esta linha é assinada', 'Este recibo é assinado'), y + 2, 6.9, SEC);
+  y += 4;
+  // dia a dia em duas colunas: DIA | CATEGORIA(S) | RECEBEU  ||  DIA | CATEGORIA(S) | RECEBEU
+  const det = c.detalhe, meio = Math.ceil(det.length / 2), cel = (d) => (d ? [`${dataBR(d.data).slice(0, 5)} ${diaSem(d.data).slice(0, 3)}`, d.categoria, brl(d.valor) + (d.consumo > 0 ? `\n(consumo - ${brl(d.consumo)})` : '')] : ['', '', '']);
+  const body = []; for (let i = 0; i < meio; i++) body.push([...cel(det[i]), ...cel(det[i + meio])]);
+  const H = doc.internal.pageSize.getHeight(), w3 = 50, w1 = 44, wc = bw / 2 - w1 - w3;
   doc.autoTable({
-    startY: precisa(y, 60), margin: { left: M, right: M, top: 90, bottom: 40 }, rowPageBreak: 'avoid', showFoot: 'lastPage',
-    head: [['DIA', 'CATEGORIA(S) NO DIA', 'DISTRIBUÍDO NO DIA', 'SUA PARTE', 'VOCÊ RECEBEU']],
-    body: c.detalhe.map((d) => [`${dataBR(d.data).slice(0, 5)} ${diaSem(d.data).slice(0, 3)}`, d.categoria, brl(d.distribuido), d.parte, brl(d.valor) + (d.consumo > 0 ? `\nconsumo - ${brl(d.consumo)}` : '')]),
-    foot: [['TOTAL', '', '', '', brl(c.valor)]],
-    styles: { fontSize: 8.6 * k, cellPadding: { top: 3.5 * k, bottom: 3.5 * k, left: 5, right: 5 } },
-    headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 7 * Math.max(k, 0.85) }, bodyStyles: { textColor: TINTA }, alternateRowStyles: { fillColor: [244, 234, 216] },
-    footStyles: { fillColor: FERR, textColor: CREME, fontStyle: 'bold' },
-    columnStyles: { 0: { cellWidth: 62 }, 2: { halign: 'right', cellWidth: 92 }, 3: { cellWidth: 92 }, 4: { halign: 'right', fontStyle: 'bold', cellWidth: 82 } },
-    didParseCell: (d) => { if (d.section !== 'body' && [2, 4].includes(d.column.index)) d.cell.styles.halign = 'right'; },
-    didDrawPage: (d) => { if (d.pageNumber > 1) cabecalho(); },
+    startY: y, margin: { left: M, right: M, top: 20, bottom: H - (fim - 30) }, rowPageBreak: 'avoid', tableWidth: bw,
+    head: [['DIA', 'CATEGORIA(S)', 'RECEBEU', 'DIA', 'CATEGORIA(S)', 'RECEBEU']], body,
+    styles: { fontSize: 6.9 * k, cellPadding: { top: 1.6 * k, bottom: 1.6 * k, left: 3, right: 3 }, textColor: TINTA, lineWidth: 0 },
+    headStyles: { fillColor: TERRA, textColor: DOUR, fontStyle: 'bold', fontSize: 6 }, alternateRowStyles: { fillColor: [244, 234, 216] },
+    columnStyles: { 0: { cellWidth: w1 }, 1: { cellWidth: wc }, 2: { cellWidth: w3, halign: 'right', fontStyle: 'bold' }, 3: { cellWidth: w1 }, 4: { cellWidth: wc }, 5: { cellWidth: w3, halign: 'right', fontStyle: 'bold' } },
+    didParseCell: (d) => { if (d.section === 'head' && [2, 5].includes(d.column.index)) d.cell.styles.halign = 'right'; },
+    didDrawCell: (d) => { if (d.column.index === 3) { doc.setDrawColor(...CREME); doc.setLineWidth(2); doc.line(d.cell.x, d.cell.y, d.cell.x, d.cell.y + d.cell.height); } },
   });
-  y = doc.lastAutoTable.finalY + 14 * k;
+  if (doc.internal.getNumberOfPages() > pg0) return false;
+  y = doc.lastAutoTable.finalY + 5;
   if (P.rodape.trim() && !c.limpezaDiaristas) {
-    y = texto(P.rodape.trim().replace(/na coluna "A receber", ao lado do meu nome/i, 'em "A receber" neste recibo').replace(/conforme a coluna "Consumo" deste relatório/i, 'conforme o consumo descontado neste recibo'), y, 8.3, TINTA) + 4;
+    y = texto(P.rodape.trim().replace(/na coluna "A receber", ao lado do meu nome/i, 'em "A receber" neste recibo').replace(/conforme a coluna "Consumo" deste relatório/i, 'conforme o consumo descontado neste recibo'), y, 6.8, TINTA);
   }
-  // assinatura
-  y = precisa(y + 26, 24);
-  doc.setDrawColor(...TINTA); doc.setLineWidth(.6); doc.line(M, y, M + bw * 0.58, y); doc.line(M + bw * 0.68, y, M + bw, y);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...SEC);
-  doc.text(c.limpezaDiaristas ? 'Assinatura do Gerente ou do Responsável pela limpeza' : 'Assinatura do colaborador', M, y + 11);
-  doc.text('Data', M + bw * 0.68, y + 11);
+  // assinatura no pé da faixa
+  const ya = fim - 10;
+  if (y + 16 > ya) return false;
+  doc.setDrawColor(...TINTA); doc.setLineWidth(.6); doc.line(M, ya, M + bw * 0.6, ya); doc.line(M + bw * 0.7, ya, M + bw, ya);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...SEC);
+  doc.text(c.limpezaDiaristas ? 'Assinatura do Gerente ou do Responsável pela limpeza' : 'Assinatura do colaborador', M, ya + 9);
+  doc.text('Data', M + bw * 0.7, ya + 9);
+  return true;
 }
 const slug = (t) => norm(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 $('#rel-recibos').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
   const E = { quem: '' };
-  const p = confirmar('PDF individual', `<span class="ap-bloco">Cada colaborador recebe uma página só com os valores dele e a explicação dia a dia, com espaço para assinar. Nenhum vê o valor dos outros.</span>
-    <label class="campo ap-bloco"><span>De quem?</span><select id="rc-quem"><option value="">Todos (uma página por colaborador)</option>${r.colaboradores.map((c, i) => `<option value="${i}">${esc(c.nome)}</option>`).join('')}</select></label>`, 'Baixar');
+  const p = confirmar('PDF individual', `<span class="ap-bloco">Um recibo por colaborador, dois por folha A4 (com linha de corte), só com os valores dele e o dia a dia, com espaço para assinar. Nenhum vê o valor dos outros.</span>
+    <label class="campo ap-bloco"><span>De quem?</span><select id="rc-quem"><option value="">Todos (dois recibos por folha)</option>${r.colaboradores.map((c, i) => `<option value="${i}">${esc(c.nome)}</option>`).join('')}</select></label>`, 'Baixar');
   $('#rc-quem').addEventListener('change', (e) => (E.quem = e.target.value));
   if (!(await p)) return;
   const lista = E.quem === '' ? r.colaboradores : [r.colaboradores[Number(E.quem)]];
