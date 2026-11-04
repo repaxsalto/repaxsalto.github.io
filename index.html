@@ -904,6 +904,7 @@ footer.rodape img { width: 150px; height: auto; display: block; }
         <button class="btn" id="rel-copiar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="5" width="9" height="9"/><path d="M11 5V2H2v9h3"/></svg>Copiar para WhatsApp</button>
         <button class="btn" id="rel-excel">Baixar Excel</button>
         <button class="btn" id="rel-ajustar" type="button">Ajustar PDF</button>
+        <button class="btn" id="rel-recibos" type="button" title="Um recibo por colaborador, cada um só com os próprios valores">Recibos individuais</button>
         <button class="btn principal grande" id="rel-pdf">Baixar PDF</button>
       </div>
     </section>
@@ -2298,6 +2299,68 @@ function montarPDF(r, P, k = 1) {
   }
   return doc;
 }
+
+/* Recibos individuais: dois por folha A4 (com linha de corte); cada recibo só mostra os valores
+   daquela pessoa, sem total geral nem o valor dos outros. */
+async function gerarRecibos(r, P) {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  P = { ...PDF_PADRAO, ...(P || {}) };
+  const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' }), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const TERRA = [36, 30, 25], FERR = [169, 68, 44], DOUR = [230, 164, 61], CREME = [255, 245, 229], TINTA = [56, 33, 24], SEC = [95, 73, 55], LINHA = [222, 205, 180];
+  const M = 36, alt = H / 2;
+  r.colaboradores.forEach((c, i) => {
+    if (i && i % 2 === 0) doc.addPage();
+    const y0 = (i % 2) * alt;
+    // linha de corte
+    if (i % 2 === 1) { doc.setDrawColor(...SEC); doc.setLineWidth(.5); doc.setLineDashPattern([4, 3], 0); doc.line(16, y0, W - 16, y0); doc.setLineDashPattern([], 0); doc.setFontSize(6.5); doc.setTextColor(...SEC); doc.text('corte aqui', W - 16, y0 - 3, { align: 'right' }); }
+    let y = y0 + 22;
+    // faixa de cabeçalho
+    doc.setFillColor(...TERRA); doc.rect(M, y, W - 2 * M, 44, 'F'); doc.setFillColor(...FERR); doc.rect(M, y, W - 2 * M, 3, 'F');
+    let tx = M + 12;
+    if (P.logo) { try { doc.addImage(SOL, 'PNG', M + 10, y + 8, 30, 30); tx = M + 48; } catch {} }
+    doc.setTextColor(...DOUR); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.text('SALTO DAS NUVENS · TAXA DE ATENDIMENTO', tx, y + 18);
+    doc.setTextColor(...CREME); doc.setFontSize(14); doc.text('RECIBO INDIVIDUAL', tx, y + 35);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(r.rotulo, W - M - 12, y + 30, { align: 'right' });
+    y += 66;
+    // pessoa
+    doc.setTextColor(...TINTA); doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text(c.nome, M, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...SEC);
+    const sub = [c.cpf ? `CPF ${c.cpf}` : '', catDiasTxt(c), `${c.dias} ${c.dias === 1 ? 'dia' : 'dias'} no período`].filter(Boolean).join('   ·   ');
+    const subL = doc.splitTextToSize(sub, W - 2 * M); doc.text(subL, M, y + 14); y += 14 + subL.length * 11 + 8;
+    // valores
+    const lin = [['Gorjeta do período', brl(c.valor)]];
+    if (c.desconto > 0) lin.push(['Consumo descontado', '- ' + brl(c.desconto)]);
+    if (c.descAplicado > 0) lin.push(['Descontos', '- ' + brl(c.descAplicado)]);
+    const bw = W - 2 * M;
+    lin.forEach(([a, b]) => { doc.setDrawColor(...LINHA); doc.setLineWidth(.6); doc.line(M, y + 6, M + bw, y + 6); doc.setTextColor(...TINTA); doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text(a, M, y); doc.text(b, M + bw, y, { align: 'right' }); y += 18; });
+    doc.setFillColor(...FERR); doc.rect(M, y - 4, bw, 26, 'F'); doc.setTextColor(...CREME); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text('A RECEBER', M + 10, y + 13); doc.setFontSize(14); doc.text(brl(c.pagar), M + bw - 10, y + 14, { align: 'right' });
+    y += 38;
+    const avisos = [];
+    if (c.pendente > 0) avisos.push(`Consumo maior que a gorjeta, não descontado aqui: ${brl(c.pendente)}.`);
+    if (c.pendenteDesc > 0) avisos.push(`Descontos maiores que o valor a receber, não descontados aqui: ${brl(c.pendenteDesc)}.`);
+    if (c.limpezaDiaristas && r.limpezaDiaristas) avisos.push(textoLD(r).replace('o valor desta linha', 'o valor deste recibo').replace('Esta linha é assinada', 'Este recibo é assinado'));
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...SEC);
+    avisos.forEach((t) => { const l = doc.splitTextToSize(t, bw); doc.text(l, M, y); y += l.length * 9.5 + 3; });
+    // texto do recibo
+    if (P.rodape.trim() && !c.limpezaDiaristas) {
+      doc.setFontSize(7.6); doc.setTextColor(...TINTA);
+      const l = doc.splitTextToSize(P.rodape.trim().replace(/na coluna "A receber", ao lado do meu nome/i, 'em "A receber" neste recibo').replace(/conforme a coluna "Consumo" deste relatório/i, 'conforme o consumo descontado neste recibo'), bw);
+      doc.text(l, M, y + 4, { lineHeightFactor: 1.3 }); y += l.length * 9.9 + 8;
+    }
+    // assinatura no pé do recibo
+    const ya = y0 + alt - 34;
+    doc.setDrawColor(...TINTA); doc.setLineWidth(.6); doc.line(M, ya, M + bw * 0.58, ya); doc.line(M + bw * 0.68, ya, M + bw, ya);
+    doc.setFontSize(7.5); doc.setTextColor(...SEC);
+    doc.text(c.limpezaDiaristas ? 'Assinatura do Gerente ou do Responsável pela limpeza' : 'Assinatura do colaborador', M, ya + 10);
+    doc.text('Data', M + bw * 0.68, ya + 10);
+  });
+  return doc;
+}
+$('#rel-recibos').addEventListener('click', async () => {
+  const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
+  let doc; try { doc = await gerarRecibos(r, cfg().pdf); } catch { return toast('Não consegui preparar os recibos. Tente de novo.', true); }
+  salvarArquivo(`recibos-taxa-saltodasnuvens-${r.arquivo}.pdf`, doc.output('arraybuffer'));
+});
 $('#rel-pdf').addEventListener('click', async () => {
   const r = dadosRel(); if (!r.qtd) return toast('Não há lançamentos neste período.', true);
   let doc; try { doc = await gerarPDF(r, cfg().pdf); } catch { return toast('Não consegui preparar o PDF. Tente de novo.', true); }
